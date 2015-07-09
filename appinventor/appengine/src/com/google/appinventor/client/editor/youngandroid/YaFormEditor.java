@@ -83,6 +83,8 @@ public final class YaFormEditor extends SimpleEditor implements FormChangeListen
 
   private static final SimpleComponentDatabase COMPONENT_DATABASE =
       SimpleComponentDatabase.getInstance();
+  
+  private static final Ode ODE = Ode.getInstance();
 
   private final YoungAndroidFormNode formNode;
 
@@ -191,12 +193,12 @@ public final class YaFormEditor extends SimpleEditor implements FormChangeListen
       @Override
       public void onFailure(Throwable caught) {
         if (caught instanceof ChecksumedFileException) {
-          Ode.getInstance().recordCorruptProject(projectId, fileId, caught.getMessage());
+          ODE.recordCorruptProject(projectId, fileId, caught.getMessage());
         }
         super.onFailure(caught);
       }
     };
-    Ode.getInstance().getProjectService().load2(projectId, fileId, callback);
+    ODE.getProjectService().load2(projectId, fileId, callback);
   }
 
   @Override
@@ -218,7 +220,7 @@ public final class YaFormEditor extends SimpleEditor implements FormChangeListen
     // set the current editor to null and clean up the UI.
     // Note: I'm not sure it is possible that we would not be the "current"
     // editor when this is called, but we check just to be safe.
-    if (Ode.getInstance().getCurrentFileEditor() == this) {
+    if (ODE.getCurrentFileEditor() == this) {
       super.onHide();
       unloadDesigner();
     } else {
@@ -293,7 +295,7 @@ public final class YaFormEditor extends SimpleEditor implements FormChangeListen
     if (loadComplete) {
       // If the property isn't actually persisted to the .scm file, we don't need to do anything.
       if (component.isPropertyPersisted(propertyName)) {
-        Ode.getInstance().getEditorManager().scheduleAutoSave(this);
+        ODE.getEditorManager().scheduleAutoSave(this);
         updatePhone();          // Push changes to the phone if it is connected
       }
     } else {
@@ -388,7 +390,7 @@ public final class YaFormEditor extends SimpleEditor implements FormChangeListen
       String upgradedContent = YoungAndroidSourceAnalyzer.generateSourceFile(propertiesObject);
       fileContentHolder.setFileContent(upgradedContent);
 
-      Ode.getInstance().getProjectService().save(Ode.getInstance().getSessionId(),
+      ODE.getProjectService().save(ODE.getSessionId(),
           getProjectId(), getFileId(), upgradedContent,
           new OdeAsyncCallback<Long>(MESSAGES.saveError()) {
             @Override
@@ -539,7 +541,7 @@ public final class YaFormEditor extends SimpleEditor implements FormChangeListen
   }
 
   private void onFormStructureChange() {
-    Ode.getInstance().getEditorManager().scheduleAutoSave(this);
+    ODE.getEditorManager().scheduleAutoSave(this);
 
     // Update source structure panel
     sourceStructureExplorer.updateTree(form.buildComponentsTree(),

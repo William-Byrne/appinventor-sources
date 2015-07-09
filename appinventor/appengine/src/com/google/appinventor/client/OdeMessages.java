@@ -2684,6 +2684,10 @@ public interface OdeMessages extends Messages {
   @Description("")
   String ProjectPathProperties();
 
+  @DefaultMessage("UniqueUserPath")
+  @Description("")
+  String UniqueUserPathProperties();
+
   @DefaultMessage("Scrollable")
   @Description("")
   String ScrollableProperties();

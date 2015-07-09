@@ -6,6 +6,7 @@
 
 package com.google.appinventor.components.runtime;
 
+import android.util.Log;
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
@@ -38,6 +39,7 @@ import android.os.Handler;
  * values are changed.
  *
  * @author kasmus@mit.edu (Kristin Asmus)
+ * @author will2596@gmail.com (William Byrne)
  */
 
 
@@ -50,9 +52,11 @@ import android.os.Handler;
 @DesignerComponent(version = YaVersion.FIREBASE_COMPONENT_VERSION,
     description = "Non-visible component that communicates with Firebase to store and " +
     "retrieve information.",
+    designerHelpDescription = "Non-visible component that communicates with a Firebase" +
+        " to store and retrieve information.",
     category = ComponentCategory.STORAGE,
     nonVisible = true,
-    iconName = "images/tinyWebDB.png") //FIXME
+    iconName = "images/firebaseDB.png")
 @SimpleObject
 @UsesPermissions(permissionNames = "android.permission.INTERNET")
 @UsesLibraries(libraries = "firebase.jar")
@@ -61,6 +65,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
   private static final String LOG_TAG = "Firebase";
 
   private String firebaseURL;
+  private String uniqueUserPath;
   private String projectPath;
   private Handler androidUIHandler;
   private final Activity activity;
@@ -82,9 +87,10 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
     this.activity = container.$context();
     Firebase.setAndroidContext(activity);
     
-    firebaseURL = "https://incandescent-fire-4621.firebaseio.com/";
+    firebaseURL = "https://resplendent-inferno-8682.firebaseio.com/";
+    uniqueUserPath = "";
     projectPath = "";
-    myFirebase = new Firebase(firebaseURL+projectPath);
+    myFirebase = new Firebase(firebaseURL + uniqueUserPath + projectPath);
 
     listener = new ChildEventListener() {
       // Retrieve new posts as they are added to Firebase
@@ -143,6 +149,15 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
     myFirebase.addChildEventListener(listener);
   }
 
+  private String getAppName() {
+    try {
+      return activity.getBaseContext().getPackageName().replaceAll("\\p{punct}", "/") + "/";
+    } catch(RuntimeException e) {
+      Log.e("PACKAGE_NAME_ERROR", "Error getting the Package Name", e);
+      return "shared/";
+    }
+  }
+
   // The two procedures below give the getter and setter for the
   // Firebase component's FirebaseURL property.  Each one has
   // a @SimpleProperty annotation to indicate that it's a property in
@@ -169,7 +184,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
    * The default value is currently my private firebase url //TODO: this should be changed
    */
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING,
-      defaultValue = "https://incandescent-fire-4621.firebaseio.com/")
+      defaultValue = "https://resplendent-inferno-8682.firebaseio.com/")
   @SimpleProperty
   public void FirebaseURL(String url) {
     firebaseURL = url;
@@ -207,12 +222,32 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
     projectPath = path;    
     resetListener();
   }
+
+  /**
+   * Returns the unique user path of the firebase.
+   */
+  @SimpleProperty(userVisible = false)
+  public String UniqueUserPath() { return uniqueUserPath; }
+
+  /**
+   * Specifies the unique user path of the firebase. This is set programmatically
+   * in {@link com.google.appinventor.client.editor.youngandroid.YaFormEditor#createMockComponent(
+   * com.google.appinventor.shared.properties.json.JSONObject,
+   * com.google.appinventor.client.editor.simple.components.MockContainer)} and consists
+   * of the current App Inventor user's email and the name of the current project.
+   */
+  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
+  @SimpleProperty(userVisible = false)
+  public void UniqueUserPath(String path) {
+    uniqueUserPath = path;
+    resetListener();
+  }
   
   private void resetListener() {
     // remove listeners from the old firebase path
     myFirebase.removeEventListener(listener);
     // set listeners for the new firebase path
-    myFirebase = new Firebase(firebaseURL+projectPath);
+    myFirebase = new Firebase(firebaseURL + uniqueUserPath + projectPath);
     myFirebase.addChildEventListener(listener);
   }
 
