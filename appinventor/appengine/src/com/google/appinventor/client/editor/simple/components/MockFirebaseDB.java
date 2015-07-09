@@ -47,7 +47,7 @@ public class MockFirebaseDB extends MockNonVisibleComponent {
     super.initComponent(widget);
 
     String userPath = ODE.getUser().getUserEmail().hashCode() + "/";
-    String projectName = ODE.getCurrentFileEditor().getFileId().split("/")[3] + "/";
+    String projectName = ODE.getCurrentFileEditor().getFileId().split("/")[3];
 
 
     changeProperty(PROPERTY_NAME_UUPATH, userPath);
