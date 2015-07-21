@@ -655,6 +655,12 @@ public class Form extends Activity
     this.scrollable = scrollable;
 
     frameLayout = scrollable ? new ScrollView(this) : new FrameLayout(this);
+
+    // Allow components in the ScrollView to occupy the entire Viewport.
+    if(frameLayout instanceof ScrollView) {
+      ((ScrollView) frameLayout).setFillViewport(true);
+    }
+
     frameLayout.addView(viewLayout.getLayoutManager(), new ViewGroup.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
         ViewGroup.LayoutParams.MATCH_PARENT));
