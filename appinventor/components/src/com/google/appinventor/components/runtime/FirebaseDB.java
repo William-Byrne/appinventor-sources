@@ -12,6 +12,7 @@ import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
+import com.firebase.client.AuthData;
 import com.google.appinventor.components.annotations.DesignerComponent;
 import com.google.appinventor.components.annotations.DesignerProperty;
 import com.google.appinventor.components.annotations.PropertyCategory;
@@ -28,6 +29,15 @@ import com.google.appinventor.components.common.YaVersion;
 import android.app.Activity;
 import android.os.Handler;
 
+//import java.io.FileOutputStream;
+//import java.io.IOException;
+//import java.io.RandomAccessFile;
+//import java.io.File;
+//import java.util.HashMap;
+//import java.util.Map;
+//import java.util.UUID;
+
+
 // When the component is installed in App Inventor, the Javadoc
 // comments will become included in the automatically-generated system
 // documentation, except for lines starting with tags (such as @author).
@@ -35,11 +45,11 @@ import android.os.Handler;
  * The Firebase component communicates with a Web service to store
  * and retrieve information.  The component has methods to
  * store a value under a tag and to retrieve the value associated with
- * the tag. It also possesses a listener to fire events when stored 
+ * the tag. It also possesses a listener to fire events when stored
  * values are changed.
  *
  * @author kasmus@mit.edu (Kristin Asmus)
- * @author will2596@gmail.com (William Byrne)
+ * @author will2596@gmail.com (William Byrne) (default Firebase partitioning and user authentication)
  */
 
 
@@ -65,12 +75,16 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
   private static final String LOG_TAG = "Firebase";
 
   private String firebaseURL;
-  private String uniqueUserPath;
-  private String projectPath;
+  private String developerBucket;
+  private String projectBucket;
+  private String firebaseToken;
+  private boolean privateUserStorage;
   private Handler androidUIHandler;
   private final Activity activity;
   private Firebase myFirebase;
-  private ChildEventListener listener;
+  private ChildEventListener childListener;
+  private Firebase.AuthStateListener authListener;
+//  private final Authenticator authenticator;
 
   /**
    * Creates a new Firebase component.
@@ -88,18 +102,21 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
     Firebase.setAndroidContext(activity);
     
     firebaseURL = "https://resplendent-inferno-8682.firebaseio.com/";
-    uniqueUserPath = "";
-    projectPath = "";
-    myFirebase = new Firebase(firebaseURL + uniqueUserPath + projectPath);
+    developerBucket = ""; // set dynamically in the Designer
+    projectBucket = ""; // given a dynamic default value in the Designer
+    firebaseToken = ""; // set dynamically in the Designer
+    privateUserStorage = false;
+    myFirebase = new Firebase(firebaseURL + "developers/" +  developerBucket + projectBucket);
+//    authenticator = new Authenticator();
 
-    listener = new ChildEventListener() {
+    childListener = new ChildEventListener() {
       // Retrieve new posts as they are added to Firebase
       @Override
       public void onChildAdded(final DataSnapshot snapshot, String previousChildKey) {
         androidUIHandler.post(new Runnable() {
           public void run() {
             // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Applcation's main
+            // stored.  We post this to run in the Application's main
             // UI thread.
             DataChanged(snapshot.getKey(), snapshot.getValue());
           }
@@ -111,7 +128,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
         androidUIHandler.post(new Runnable() {
           public void run() {
             // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Applcation's main
+            // stored.  We post this to run in the Application's main
             // UI thread.
             FirebaseError(error.getMessage());
           }
@@ -123,7 +140,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
         androidUIHandler.post(new Runnable() {
           public void run() {
             // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Applcation's main
+            // stored.  We post this to run in the Application's main
             // UI thread.
             DataChanged(snapshot.getKey(), snapshot.getValue());
           }
@@ -138,25 +155,148 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
         androidUIHandler.post(new Runnable() {
           public void run() {
             // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Applcation's main
+            // stored.  We post this to run in the Application's main
             // UI thread.
             DataChanged(snapshot.getKey(), null);
           }
         });
       }
     };
-    
-    myFirebase.addChildEventListener(listener);
+
+    authListener = new Firebase.AuthStateListener() {
+      @Override
+      public void onAuthStateChanged(AuthData data) {
+        if (data == null) {
+          myFirebase.authWithCustomToken(firebaseToken, new Firebase.AuthResultHandler() {
+            @Override
+            public void onAuthenticated(AuthData authData) {
+              Log.e(LOG_TAG, "Auth Successful.");
+            }
+
+            @Override
+            public void onAuthenticationError(FirebaseError firebaseError) {
+              Log.e(LOG_TAG, "Auth Failed.");
+            }
+          });
+        }
+      }
+    };
+
+    myFirebase.addAuthStateListener(authListener);
+    myFirebase.addChildEventListener(childListener);
   }
 
-  private String getAppName() {
-    try {
-      return activity.getBaseContext().getPackageName().replaceAll("\\p{punct}", "/") + "/";
-    } catch(RuntimeException e) {
-      Log.e("PACKAGE_NAME_ERROR", "Error getting the Package Name", e);
-      return "shared/";
-    }
-  }
+//  /**
+//   * Callback for use in authenticating a user of this Firebase.
+//   */
+//  private interface AuthCallback {
+//    void onUUIDObtained(String UUID);
+//  }
+//
+//  /**
+//   * Utility class for authenticating users of a FirebaseDB app using the
+//   * default Firebase. This class also stores an "INSTALL_ID" in local
+//   * storage that is unique for each user of the app.
+//   *
+//   * @author will2596@gmail.com (William Byrne)
+//   */
+//  private class Authenticator {
+//    private File installation;
+//    private final AuthCallback authCallback;
+//
+//    public Authenticator() {
+//      installation = new File(activity.getFilesDir(), "INSTALL_ID");
+//      authCallback = new AuthCallback() {
+//        @Override
+//        public void onUUIDObtained(String UUID) {
+//          Map<String, Object> payload = new HashMap<String, Object>();
+//          payload.put("uid", UUID);
+//          payload.put("devBucket", developerBucket.substring(0, developerBucket.length()-1));
+//          payload.put("projBucket", projectBucket);
+//
+//          TokenGenerator tokenGen = new TokenGenerator("hOUUPiTkuKkJLg2nG4wEoWfF6eGaf0dV1ZQETUvp");
+//          String JWT = tokenGen.createToken(payload);
+//          myFirebase.authWithCustomToken(JWT, new Firebase.AuthResultHandler() {
+//            @Override
+//            public void onAuthenticated(AuthData authData) {
+//              Log.e(LOG_TAG, "Auth Successful.");
+//            }
+//
+//            @Override
+//            public void onAuthenticationError(FirebaseError firebaseError) {
+//              Log.e(LOG_TAG, "Auth Failed.");
+//            }
+//          });
+//        }
+//      };
+//    }
+//
+//    public void auth() {
+//      if (!installation.exists()) {
+//        // If the app is being run for the first time, create an Install_ID
+//        // file and store a new UUID for authentication.
+//        createInstallationFile();
+//      } else {
+//        // Otherwise, read the Install_ID file to obtain the UUID
+//        // for authentication.
+//        readInstallationFile();
+//      }
+//    }
+//
+//    private void createInstallationFile() {
+//      // Create a ref to a new bucket named with a new UUID
+//      final Firebase ref = myFirebase.child("users").child(UUID.randomUUID().toString());
+//
+//      ref.addListenerForSingleValueEvent(new ValueEventListener() {
+//        @Override
+//        public void onDataChange(DataSnapshot snapshot) {
+//          if (snapshot.exists()) {
+//            createInstallationFile();
+//            return;
+//          }
+//
+//          // Authenticate the user with their new UUID
+//          authCallback.onUUIDObtained(snapshot.getKey());
+//
+//          // Write the UUID to the "Install_ID" file
+//          writeInstallationFile(snapshot.getKey());
+//        }
+//
+//        @Override
+//        public void onCancelled(FirebaseError firebaseError) {
+//          // Do nothing.
+//        }
+//      });
+//    }
+//
+//    private void writeInstallationFile(String UUID) {
+//      try {
+//        FileOutputStream out = new FileOutputStream(installation);
+//
+//        out.write(UUID.getBytes());
+//        out.close();
+//      } catch (IOException e) {
+//        Log.e(LOG_TAG, "Failed to write installation file.", e);
+//        throw new RuntimeException(e);
+//      }
+//    }
+//
+//    private void readInstallationFile() {
+//      try {
+//        RandomAccessFile f = new RandomAccessFile(installation, "r");
+//        byte[] bytes = new byte[(int) f.length()];
+//
+//        f.readFully(bytes);
+//        f.close();
+//
+//        // Authenticate the user with their UUID
+//        authCallback.onUUIDObtained(new String(bytes));
+//      } catch (IOException e) {
+//        Log.e(LOG_TAG, "Failed to read installation file.", e);
+//        throw new RuntimeException(e);
+//      }
+//    }
+//  }
 
   // The two procedures below give the getter and setter for the
   // Firebase component's FirebaseURL property.  Each one has
@@ -203,56 +343,110 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
   // it does not automatically set the value of ProjectPath by itself,
   // which is why we explicitly set the variable ProjectPath above
   // where the component is created.
+
   /**
-   * Returns the path of the firebase.
+   * Returns the path for the developer bucket of the firebase.
    */
-  @SimpleProperty(
-      category = PropertyCategory.BEHAVIOR)
-  public String ProjectPath() {
-    return projectPath;
+  @SimpleProperty(category = PropertyCategory.BEHAVIOR, userVisible = false)
+  public String DeveloperBucket() {
+    return developerBucket;
   }
 
   /**
-   * Specifies the path of the firebase.
+   * Specifies the unique developer path of the Firebase. This is set programmatically
+   * in {@link com.google.appinventor.client.editor.simple.components.MockFirebaseDB}
+   * and consists of the current App Inventor user's email.
+   *
+   * @param bucket the name of the developer's bucket
+   */
+  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
+  @SimpleProperty
+  public void DeveloperBucket(String bucket) {
+    developerBucket = bucket;
+    resetListener();
+  }
+
+  /**
+   * Returns the path for the project bucket of the firebase.
+   */
+  @SimpleProperty(category = PropertyCategory.BEHAVIOR)
+  public String ProjectBucket() {
+    return projectBucket;
+  }
+
+  /**
+   * Specifies the path for the project bucket of the firebase.
    */
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING,
       defaultValue = "")
   @SimpleProperty
-  public void ProjectPath(String path) {
-    projectPath = path;    
+  public void ProjectBucket(String path) {
+    projectBucket = path;
     resetListener();
   }
 
-  /**
-   * Returns the unique user path of the firebase.
-   */
-  @SimpleProperty(userVisible = false)
-  public String UniqueUserPath() { return uniqueUserPath; }
+  @SimpleProperty(category = PropertyCategory.BEHAVIOR, userVisible = false)
+  public String FirebaseToken() {
+    return firebaseToken;
+  }
 
-  /**
-   * Specifies the unique user path of the firebase. This is set programmatically
-   * in {@link com.google.appinventor.client.editor.youngandroid.YaFormEditor#createMockComponent(
-   * com.google.appinventor.shared.properties.json.JSONObject,
-   * com.google.appinventor.client.editor.simple.components.MockContainer)} and consists
-   * of the current App Inventor user's email and the name of the current project.
-   */
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
-  @SimpleProperty(userVisible = false)
-  public void UniqueUserPath(String path) {
-    uniqueUserPath = path;
+  @SimpleProperty
+  public void FirebaseToken(String JWT) {
+    firebaseToken = JWT;
     resetListener();
   }
+
+//  /**
+//   * Specifies whether to use private storage for each user of this Firebase
+//   * application.
+//   *
+//   * @param privateUserStorage true for private storage, false for
+//   *                           shared storage
+//   */
+//  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
+//      defaultValue = "False")
+//  @SimpleProperty(userVisible = false)
+//  public void PrivateUserStorage(boolean privateUserStorage) {
+//    this.privateUserStorage = privateUserStorage;
+//  }
   
   private void resetListener() {
     // remove listeners from the old firebase path
-    myFirebase.removeEventListener(listener);
+    myFirebase.removeEventListener(childListener);
+    myFirebase.removeAuthStateListener(authListener);
+
     // set listeners for the new firebase path
-    myFirebase = new Firebase(firebaseURL + uniqueUserPath + projectPath);
-    myFirebase.addChildEventListener(listener);
+    if(firebaseURL.equals("https://resplendent-inferno-8682.firebaseio.com/")) {
+      myFirebase = new Firebase(firebaseURL + "developers/" + developerBucket + projectBucket);
+
+      if(!developerBucket.equals("") && !projectBucket.equals("")) {
+        myFirebase = myFirebase.child("shared");
+
+        // Authenticate the user once the developer and project
+        // buckets have been finalized.
+        myFirebase.authWithCustomToken(firebaseToken, new Firebase.AuthResultHandler() {
+          @Override
+          public void onAuthenticated(AuthData authData) {
+            Log.e(LOG_TAG, "Auth Successful.");
+          }
+
+          @Override
+          public void onAuthenticationError(FirebaseError firebaseError) {
+            Log.e(LOG_TAG, "Auth Failed.");
+          }
+        });
+      }
+    } else {
+      myFirebase = new Firebase(firebaseURL + projectBucket);
+    }
+
+    myFirebase.addAuthStateListener(authListener);
+    myFirebase.addChildEventListener(childListener);
   }
 
   /**
-   * Asks Firebase to store the given value under the given tag
+   * Asks Firebase to store the given value under the given tag.
    *
    * @param tag The tag to use
    * @param valueToStore The value to store. Can be any type of value (e.g.
@@ -323,7 +517,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
         androidUIHandler.post(new Runnable() {
           public void run() {
             // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Applcation's main
+            // stored.  We post this to run in the Application's main
             // UI thread.
             GotValue(tag, snapshot.getValue());
           }

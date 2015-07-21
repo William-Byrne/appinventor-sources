@@ -2680,13 +2680,21 @@ public interface OdeMessages extends Messages {
   @Description("")
   String FirebaseURLProperties();
   
-  @DefaultMessage("ProjectPath")
+  @DefaultMessage("ProjectBucket")
   @Description("")
-  String ProjectPathProperties();
+  String ProjectBucketProperties();
 
-  @DefaultMessage("UniqueUserPath")
+  @DefaultMessage("DeveloperBucket")
   @Description("")
-  String UniqueUserPathProperties();
+  String DeveloperBucketProperties();
+
+  @DefaultMessage("FirebaseToken")
+  @Description("")
+  String FirebaseTokenProperties();
+
+  @DefaultMessage("PrivateUserStorage")
+  @Description("")
+  String PrivateUserStorageProperties();
 
   @DefaultMessage("Scrollable")
   @Description("")
