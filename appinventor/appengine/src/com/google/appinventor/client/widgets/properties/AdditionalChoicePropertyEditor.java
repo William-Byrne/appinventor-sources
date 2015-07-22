@@ -7,8 +7,8 @@
 package com.google.appinventor.client.widgets.properties;
 
 import static com.google.appinventor.client.Ode.MESSAGES;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -80,6 +80,14 @@ public abstract class AdditionalChoicePropertyEditor extends PropertyEditor {
     VerticalPanel contentPanel = new VerticalPanel();
     contentPanel.add(panel);
     contentPanel.add(buttonPanel);
+    contentPanel.addDomHandler(new KeyPressHandler() {
+      @Override
+      public void onKeyPress(KeyPressEvent event) {
+        if(event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
+          closeAdditionalChoiceDialog(true);
+        }
+      }
+    }, KeyPressEvent.getType());
 
     popup = new PopupPanel(false, true);
     popup.setAutoHideEnabled(true);
