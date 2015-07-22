@@ -1276,7 +1276,18 @@ public class Form extends Activity
 
   @Override
   public void $add(AndroidViewComponent component) {
-    viewLayout.add(component);
+    // If we don't "Match Parent" (i.e. Fill Parent) when scrollable is true,
+    // screens with components loading dynamic content (e.g. WebViewer) only
+    // utilize the additional space that was available in the LinearLayout prior to loading the content.
+    // In other words, they won't take advantage of the fact that the screen can scroll.
+    if(!scrollable) {
+      viewLayout.add(component);
+    } else {
+      viewLayout.add(component, new android.widget.LinearLayout.LayoutParams(
+         ViewGroup.LayoutParams.MATCH_PARENT, // width
+         ViewGroup.LayoutParams.MATCH_PARENT, // height
+         0f));                                // weight
+    }
   }
 
   @Override
