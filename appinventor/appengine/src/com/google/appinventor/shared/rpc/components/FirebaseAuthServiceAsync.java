@@ -5,7 +5,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 /**
  * Async for the Firebase Authentication RPC.
  *
- * @author William Byrne
+ * @author will2596@gmail.com (William Byrne)
  */
 public interface FirebaseAuthServiceAsync {
 

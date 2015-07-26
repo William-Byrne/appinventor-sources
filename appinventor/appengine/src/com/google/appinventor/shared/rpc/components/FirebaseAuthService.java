@@ -7,7 +7,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 /**
  * Service interface for the Firebase Authentication RPC.
  *
- * @author William Byrne
+ * @author will2596@gmail.com (William Byrne)
  */
 @RemoteServiceRelativePath(ServerLayout.FIREBASE_AUTH_SERVICE)
 public interface FirebaseAuthService extends RemoteService {

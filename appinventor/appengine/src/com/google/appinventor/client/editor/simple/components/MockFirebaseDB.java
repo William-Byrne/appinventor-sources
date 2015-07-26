@@ -2,6 +2,7 @@ package com.google.appinventor.client.editor.simple.components;
 
 import com.google.appinventor.client.Ode;
 import com.google.appinventor.client.editor.simple.SimpleEditor;
+import com.google.appinventor.client.output.OdeLog;
 import com.google.appinventor.shared.rpc.components.FirebaseAuthService;
 import com.google.appinventor.shared.rpc.components.FirebaseAuthServiceAsync;
 import com.google.gwt.core.client.GWT;
@@ -46,7 +47,7 @@ public class MockFirebaseDB extends MockNonVisibleComponent {
   public final void initComponent(Widget widget) {
     super.initComponent(widget);
 
-    String devBucket = ODE.getUser().getUserEmail().hashCode() + "";
+    String devBucket = ODE.getUser().getUserEmail().replace(".", "") + "";
     String projectName = ODE.getCurrentFileEditor().getFileId().split("/")[3];
 
 
@@ -57,18 +58,15 @@ public class MockFirebaseDB extends MockNonVisibleComponent {
       firebaseAuthSvc = GWT.create(FirebaseAuthService.class);
     }
 
-    final MockFirebaseDB caller = this;
-
     AsyncCallback<String> callback = new AsyncCallback<String>() {
       @Override
       public void onSuccess(String JWT) {
-        caller.changeProperty(PROPERTY_NAME_FIREBASE_TOKEN, JWT);
+        changeProperty(PROPERTY_NAME_FIREBASE_TOKEN, JWT);
       }
 
       @Override
       public void onFailure(Throwable caught) {
-        caught.printStackTrace();
-        // TODO: What errors might we encounter here?
+        OdeLog.elog("Failed to create FirebaseDB JWT!");
       }
     };
 

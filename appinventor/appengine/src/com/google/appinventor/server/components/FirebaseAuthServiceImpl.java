@@ -1,16 +1,16 @@
 package com.google.appinventor.server.components;
 
+import com.firebase.security.token.TokenOptions;
 import com.google.appinventor.server.OdeRemoteServiceServlet;
 import com.firebase.security.token.TokenGenerator;
 import com.google.appinventor.shared.rpc.components.FirebaseAuthService;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Servlet for the Firebase Authentication RPC.
  *
- * @author William Byrne
+ * @author will2596@gmail.com (William Byrne)
  */
 public class FirebaseAuthServiceImpl extends OdeRemoteServiceServlet
     implements FirebaseAuthService {
@@ -28,9 +28,19 @@ public class FirebaseAuthServiceImpl extends OdeRemoteServiceServlet
     Map<String, Object> payload = new HashMap<String, Object>();
     payload.put("developer", developer);
     payload.put("project", project);
+    payload.put("uid", "" + UUID.randomUUID());
 
     // Create a TokenGenerator with the App Inventor Firebase Secret
     TokenGenerator tokenGen = new TokenGenerator("hOUUPiTkuKkJLg2nG4wEoWfF6eGaf0dV1ZQETUvp");
-    return tokenGen.createToken(payload); // return a JWT containing the payload
+
+    // We need the token to last for the foreseeable future. It would not be
+    // feasible to require the end users of App Inventor apps to make
+    // requests to the Auth servlet on a regular basis.
+    TokenOptions expiration = new TokenOptions();
+    Calendar future = Calendar.getInstance();
+    future.set(Calendar.YEAR, 2500);
+    expiration.setExpires(future.getTime());
+
+    return tokenGen.createToken(payload, expiration); // return a JWT containing the payload
   }
 }

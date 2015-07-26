@@ -5298,6 +5298,10 @@ public interface OdeMessages extends Messages {
   @Description("")
   String YandexTranslateHelpStringComponentPallette();
 
+  @DefaultMessage("Allows the storage of information in a Firebase.")
+  @Description("")
+  String FirebaseDBHelpStringComponentPallette();
+
 
   //Ode.java messages
   @DefaultMessage("Welcome to App Inventor 2!")
