@@ -5298,7 +5298,7 @@ public interface OdeMessages extends Messages {
   @Description("")
   String YandexTranslateHelpStringComponentPallette();
 
-  @DefaultMessage("Allows the storage of information in a Firebase.")
+  @DefaultMessage("A non-visible component allowing you to store data in the \"Cloud\" so that it can be shared by all the users of your app.")
   @Description("")
   String FirebaseDBHelpStringComponentPallette();
 
