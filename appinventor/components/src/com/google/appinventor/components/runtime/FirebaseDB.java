@@ -93,14 +93,13 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
     myFirebase = new Firebase(firebaseURL + "developers/" + developerBucket + projectBucket);
 
     childListener = new ChildEventListener() {
-      // Retrieve new posts as they are added to Firebase
+      // Retrieve new posts as they are added to the Firebase.
       @Override
       public void onChildAdded(final DataSnapshot snapshot, String previousChildKey) {
         androidUIHandler.post(new Runnable() {
           public void run() {
-            // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Application's main
-            // UI thread.
+            // Signal an event to indicate that the child data was changed.
+            // We post this to run in the Application's main UI thread.
             DataChanged(snapshot.getKey(), snapshot.getValue());
           }
         });
@@ -110,9 +109,8 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
       public void onCancelled(final FirebaseError error) {
         androidUIHandler.post(new Runnable() {
           public void run() {
-            // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Application's main
-            // UI thread.
+            // Signal an event to indicate that an error occurred.
+            // We post this to run in the Application's main UI thread.
             FirebaseError(error.getMessage());
           }
         });
@@ -122,9 +120,8 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
       public void onChildChanged(final DataSnapshot snapshot, String previousChildKey) {
         androidUIHandler.post(new Runnable() {
           public void run() {
-            // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Application's main
-            // UI thread.
+            // Signal an event to indicate that the child data was changed.
+            // We post this to run in the Application's main UI thread.
             DataChanged(snapshot.getKey(), snapshot.getValue());
           }
         });
@@ -138,9 +135,8 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
       public void onChildRemoved(final DataSnapshot snapshot) {
         androidUIHandler.post(new Runnable() {
           public void run() {
-            // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Application's main
-            // UI thread.
+            // Signal an event to indicate that the child data was changed.
+            // We post this to run in the Application's main UI thread.
             DataChanged(snapshot.getKey(), null);
           }
         });
@@ -171,28 +167,36 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
   }
 
   /**
-   * Returns the URL of the Firebase.
+   * Getter for the Firebase URL.
+   *
+   * @return the URL for this Firebase
    */
-  @SimpleProperty(
-      category = PropertyCategory.BEHAVIOR)
+  @SimpleProperty(category = PropertyCategory.BEHAVIOR,
+      description = "Gets the URL for this FirebaseDB.")
   public String FirebaseURL() {
     return firebaseURL;
   }
 
   /**
-   * Specifies the URL of the Firebase.
-   * The default value is currently my private Firebase url //TODO: this should be changed
+   * Specifies the URL for the Firebase.
+   *
+   * The default value is currently my private Firebase URL, but this will
+   * eventually changed once the App Inventor Candle plan is activated.
+   *
+   * @param url the URL for the Firebase
    */
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING,
       defaultValue = DEFAULT_URL)
-  @SimpleProperty
+  @SimpleProperty(description = "Sets the URL for this FirebaseDB.")
   public void FirebaseURL(String url) {
     firebaseURL = url;
     resetListener();
   }
 
   /**
-   * Returns the path for the developer bucket of the Firebase.
+   * Getter for the DeveloperBucket.
+   *
+   * @return the DeveloperBucket for this Firebase
    */
   @SimpleProperty(category = PropertyCategory.BEHAVIOR, userVisible = false)
   public String DeveloperBucket() {
@@ -214,29 +218,45 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
   }
 
   /**
-   * Returns the path for the project bucket of the Firebase.
+   * Getter for the ProjectBucket.
+   *
+   * @return the ProjectBucket for this Firebase
    */
-  @SimpleProperty(category = PropertyCategory.BEHAVIOR)
+  @SimpleProperty(category = PropertyCategory.BEHAVIOR,
+      description = "Gets the ProjectBucket for this FirebaseDB.")
   public String ProjectBucket() {
     return projectBucket;
   }
 
   /**
    * Specifies the path for the project bucket of the Firebase.
+   *
+   * @param bucket the name of the project's bucket
    */
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING,
       defaultValue = "")
-  @SimpleProperty
-  public void ProjectBucket(String path) {
-    projectBucket = path;
+  @SimpleProperty(description = "Sets the ProjectBucket for this FirebaseDB.")
+  public void ProjectBucket(String bucket) {
+    projectBucket = bucket;
     resetListener();
   }
 
+  /**
+   * Getter for the FirebaseToken.
+   *
+   * @return the JWT used to authenticate users on the default Firebase
+   */
   @SimpleProperty(category = PropertyCategory.BEHAVIOR, userVisible = false)
   public String FirebaseToken() {
     return firebaseToken;
   }
 
+  /**
+   * Specifies the JWT for the default Firebase.
+   *
+   * @param JWT the JSON Web Token (JWT) used to authenticate on the
+   *            default Firebase
+   */
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
   @SimpleProperty
   public void FirebaseToken(String JWT) {
@@ -247,23 +267,32 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
   private void resetListener() {
     // remove listeners from the old Firebase path
     myFirebase.removeEventListener(childListener);
-    myFirebase.removeAuthStateListener(authListener);
 
     if(firebaseURL.equals(DEFAULT_URL)) {
       myFirebase = new Firebase(firebaseURL + "developers/" + developerBucket + projectBucket);
-
-      // add the authListener to the new Firebase path only when the
-      // default Firebase is being used
-      myFirebase.addAuthStateListener(authListener);
     } else {
       myFirebase = new Firebase(firebaseURL + projectBucket);
     }
 
-    // add the childListener to the new Firebase path
+    // add the listeners to the new Firebase path
     myFirebase.addChildEventListener(childListener);
   }
 
+  /*
+     TODO (William Byrne): Implement Transactions
 
+     As things stand, any operation performed on a tag that depends on the
+     existing data at the tag is vulnerable to concurrent modification bugs.
+     This is caused by the inherent non-atomicity of such an operation using
+     the existing component blocks. One way to solve this problem would be to
+     use the Firebase#runTransaction(Transaction.Handler) method to run such an
+     operation atomically. However, that entails either creating a RunTransaction
+     block that accepts both an operation to perform on the cloud variable and
+     additional data or creating individual blocks performing commonly needed
+     operations on cloud variables (e.g. increment, decrement, append to list, etc)
+     atomically. Since both of those solutions require involved implementations,
+     this issue is being left for Version 2.
+   */
 
   /**
    * Asks Firebase to store the given value under the given tag.
@@ -338,10 +367,6 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
     this.myFirebase.child(tag).addListenerForSingleValueEvent(new ValueEventListener() {
       @Override
       public void onDataChange(final DataSnapshot currentData) {
-        // TODO: Wouldn't it be better to just not fire the event if the value doesn't exist?
-        // This seems like a good solution in a synchronous model, but not so much in an asynchronous
-        // one.
-
 //        final String value = (snapshot != null)
 //            ? (String) snapshot.getValue() : valueIfTagNotThere;
 
@@ -350,7 +375,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
         androidUIHandler.post(new Runnable() {
           public void run() {
             // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Application's main
+            // received.  We post this to run in the Application's main
             // UI thread.
             GotValue(tag, value);
           }
@@ -361,8 +386,8 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
       public void onCancelled(final FirebaseError error) {
         androidUIHandler.post(new Runnable() {
           public void run() {
-            // Signal an event to indicate that the value was
-            // stored.  We post this to run in the Applcation's main
+            // Signal an event to indicate that an error occurred.
+            // We post this to run in the Applcation's main
             // UI thread.
             FirebaseError(error.getMessage());
           }
@@ -419,8 +444,10 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
    */
   @SimpleEvent
   public void FirebaseError(String message) {
+    // Log the error message for advanced developers
+    Log.e(LOG_TAG, message);
+
     // Invoke the application's "FirebaseError" event handler
-    // Log.w(LOG_TAG, "calling error event handler: " + message);
     EventDispatcher.dispatchEvent(this, "FirebaseError", message);
   }
 }
