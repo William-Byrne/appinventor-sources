@@ -24,8 +24,7 @@ public class MockFirebaseDB extends MockNonVisibleComponent {
   private static final String PROPERTY_NAME_PROJECT_BUCKET = "ProjectBucket";
   private static final String PROPERTY_NAME_FIREBASE_TOKEN = "FirebaseToken";
   private static final Ode ODE = Ode.getInstance();
-
-  private FirebaseAuthServiceAsync firebaseAuthSvc = GWT.create(FirebaseAuthService.class);
+  private static final FirebaseAuthServiceAsync AUTH_SVC = GWT.create(FirebaseAuthService.class);
 
   /**
    * Creates a new instance of a non-visible component whose icon is
@@ -47,16 +46,11 @@ public class MockFirebaseDB extends MockNonVisibleComponent {
   public final void initComponent(Widget widget) {
     super.initComponent(widget);
 
-    String devBucket = ODE.getUser().getUserEmail().replace(".", "") + "";
+    String devBucket = ODE.getUser().getUserEmail().replace(".", ":") + "";
     String projectName = ODE.getCurrentFileEditor().getFileId().split("/")[3];
-
 
     changeProperty(PROPERTY_NAME_DEVELOPER_BUCKET, devBucket + "/");
     changeProperty(PROPERTY_NAME_PROJECT_BUCKET, projectName);
-
-    if(firebaseAuthSvc == null) {
-      firebaseAuthSvc = GWT.create(FirebaseAuthService.class);
-    }
 
     AsyncCallback<String> callback = new AsyncCallback<String>() {
       @Override
@@ -70,7 +64,7 @@ public class MockFirebaseDB extends MockNonVisibleComponent {
       }
     };
 
-    firebaseAuthSvc.getToken(devBucket, projectName, callback);
+    AUTH_SVC.getToken(devBucket, projectName, callback);
   }
 
   /**
