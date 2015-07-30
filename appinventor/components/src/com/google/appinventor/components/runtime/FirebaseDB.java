@@ -33,9 +33,6 @@ import android.util.Log;
 import android.app.Activity;
 import android.os.Handler;
 
-// When the component is installed in App Inventor, the Javadoc
-// comments will become included in the automatically-generated system
-// documentation, except for lines starting with tags (such as @author).
 /**
  * The Firebase component communicates with a Web service to store
  * and retrieve information.  The component has methods to
@@ -46,13 +43,6 @@ import android.os.Handler;
  * @author kasmus@mit.edu (Kristin Asmus)
  * @author will2596@gmail.com (William Byrne) (default Firebase partitioning and user authentication)
  */
-
-
-// The annotations here provide information to the compiler about
-// integrating the component into App Inventor system.  The following
-// three annotations stipulate that Firebase Component will appear in the
-// designer, that it will be an object in the App Inventor language,
-// and say what Android system permissions it requires.
 
 @DesignerComponent(version = YaVersion.FIREBASE_COMPONENT_VERSION,
     description = "Non-visible component that communicates with Firebase to store and " +
@@ -180,18 +170,6 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
     myFirebase.addChildEventListener(childListener);
   }
 
-  // The two procedures below give the getter and setter for the
-  // Firebase component's FirebaseURL property.  Each one has
-  // a @SimpleProperty annotation to indicate that it's a property in
-  // the language (and blocks will be generated for it).  The setter
-  // also has a @DesignerProperty that makes this property appear in the
-  // Properties listed with the component in the designer.  Here we've
-  // stipulated that the property should appear with a default value.  Note
-  // that this default specifies what should be shown in the designer:
-  // it does not automatically set the value of FirebaseURL by itself,
-  // which is why we explicitly set the variable FirebaseURL above
-  // where the component is created.
-
   /**
    * Returns the URL of the Firebase.
    */
@@ -212,19 +190,6 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
     firebaseURL = url;
     resetListener();
   }
-  
-  
-  // The two procedures below give the getter and setter for the
-  // Firebase component's ProjectPath property.  Each one has
-  // a @SimpleProperty annotation to indicate that it's a property in
-  // the language (and blocks will be generated for it).  The setter
-  // also has a @DesignerProperty that makes this property appear in the
-  // Properties listed with the component in the designer.  Here we've
-  // stipulated that the property should appear with a default value.  Note
-  // that this default specifies what should be shown in the designer:
-  // it does not automatically set the value of ProjectPath by itself,
-  // which is why we explicitly set the variable ProjectPath above
-  // where the component is created.
 
   /**
    * Returns the path for the developer bucket of the Firebase.
