@@ -1,6 +1,7 @@
 package com.google.appinventor.client.editor.simple.components;
 
 import com.google.appinventor.client.Ode;
+import com.google.appinventor.client.editor.FileEditor;
 import com.google.appinventor.client.editor.simple.SimpleEditor;
 import com.google.appinventor.client.output.OdeLog;
 import com.google.appinventor.shared.rpc.components.FirebaseAuthService;
@@ -41,13 +42,22 @@ public class MockFirebaseDB extends MockNonVisibleComponent {
   /**
    * Initializes the "ProjectBucket", "DeveloperBucket", "FirebaseToken"
    * properties dynamically.
+   *
+   * @param widget the iconImage for the MockFirebaseDB
    */
   @Override
   public final void initComponent(Widget widget) {
     super.initComponent(widget);
 
     String devBucket = ODE.getUser().getUserEmail().replace(".", ":") + "";
-    String projectName = ODE.getCurrentFileEditor().getFileId().split("/")[3];
+    String projectName = "";
+
+    // Make sure the FileEditor has loaded before attempting to
+    // retrieve the projectName
+    FileEditor curr = ODE.getCurrentFileEditor();
+    if(curr != null) {
+      projectName = curr.getFileId().split("/")[3];
+    }
 
     changeProperty(PROPERTY_NAME_DEVELOPER_BUCKET, devBucket + "/");
     changeProperty(PROPERTY_NAME_PROJECT_BUCKET, projectName);
@@ -76,8 +86,8 @@ public class MockFirebaseDB extends MockNonVisibleComponent {
    */
   @Override
   protected boolean isPropertyVisible(String propertyName) {
-    return !propertyName.equals(PROPERTY_NAME_DEVELOPER_BUCKET) &&
-        !propertyName.equals(PROPERTY_NAME_FIREBASE_TOKEN) &&
-        super.isPropertyVisible(propertyName);
+    return !propertyName.equals(PROPERTY_NAME_DEVELOPER_BUCKET)
+        && !propertyName.equals(PROPERTY_NAME_FIREBASE_TOKEN)
+        && super.isPropertyVisible(propertyName);
   }
 }
