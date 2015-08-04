@@ -3,9 +3,13 @@ package com.google.appinventor.server.components;
 import com.firebase.security.token.TokenOptions;
 import com.google.appinventor.server.OdeRemoteServiceServlet;
 import com.firebase.security.token.TokenGenerator;
+import com.google.appinventor.server.flags.Flag;
 import com.google.appinventor.shared.rpc.components.FirebaseAuthService;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Servlet for the Firebase Authentication RPC.
@@ -31,7 +35,8 @@ public class FirebaseAuthServiceImpl extends OdeRemoteServiceServlet
     payload.put("uid", "" + UUID.randomUUID());
 
     // Create a TokenGenerator with the App Inventor Firebase Secret
-    TokenGenerator tokenGen = new TokenGenerator("hOUUPiTkuKkJLg2nG4wEoWfF6eGaf0dV1ZQETUvp");
+    String secret = Flag.createFlag("firebase.secret", "").get();
+    TokenGenerator tokenGen = new TokenGenerator(secret);
 
     // We need the token to last for the foreseeable future. It would not be
     // feasible to require the end users of App Inventor apps to make

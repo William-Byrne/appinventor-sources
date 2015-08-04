@@ -93,6 +93,9 @@
 
     <property name="wifi.enabled" value="true" />
 
+    <!-- Firebase Secret for the shared datastore -->
+    <property name="firebase.secret" value="hOUUPiTkuKkJLg2nG4wEoWfF6eGaf0dV1ZQETUvp" />
+
   </system-properties>
 
   <!-- Enable concurrency in the app engine server -->
