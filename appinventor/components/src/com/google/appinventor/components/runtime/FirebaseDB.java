@@ -27,11 +27,16 @@ import com.google.appinventor.components.common.PropertyTypeConstants;
 import com.google.appinventor.components.common.YaVersion;
 import com.google.appinventor.components.runtime.errors.YailRuntimeError;
 import com.google.appinventor.components.runtime.util.JsonUtil;
+import com.google.appinventor.components.runtime.util.YailList;
+import gnu.lists.FString;
+import gnu.math.IntFraction;
 import org.json.JSONException;
 
 import android.util.Log;
 import android.app.Activity;
 import android.os.Handler;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The Firebase component communicates with a Web service to store
@@ -69,7 +74,6 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
   private final Activity activity;
   private Firebase myFirebase;
   private ChildEventListener childListener;
-  private Firebase.AuthStateListener authListener;
 
   /**
    * Creates a new Firebase component.
@@ -143,19 +147,19 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
       }
     };
 
-    authListener = new Firebase.AuthStateListener() {
+    Firebase.AuthStateListener authListener = new Firebase.AuthStateListener() {
       @Override
       public void onAuthStateChanged(AuthData data) {
         if (data == null) {
           myFirebase.authWithCustomToken(firebaseToken, new Firebase.AuthResultHandler() {
             @Override
             public void onAuthenticated(AuthData authData) {
-              Log.e(LOG_TAG, "Auth Successful.");
+              Log.i(LOG_TAG, "Auth Successful.");
             }
 
             @Override
             public void onAuthenticationError(FirebaseError error) {
-              Log.e(LOG_TAG, "Auth Failed with Message: " + error.getMessage());
+              Log.e(LOG_TAG, "Auth Failed: " + error.getMessage());
             }
           });
         }
@@ -274,7 +278,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
       myFirebase = new Firebase(firebaseURL + projectBucket);
     }
 
-    // add the listeners to the new Firebase path
+    // add listeners to the new Firebase path
     myFirebase.addChildEventListener(childListener);
   }
 
@@ -302,60 +306,22 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
    * number, text, boolean or list).
    */
   @SimpleFunction
-  public void StoreValue(final String tag, final Object valueToStore) {
+  public void StoreValue(final String tag, Object valueToStore) {
     try {
-      this.myFirebase.child(tag).setValue(JsonUtil.getJsonRepresentation(valueToStore));
+      if(valueToStore != null) {
+        valueToStore = JsonUtil.getJsonRepresentation(valueToStore);
+      }
     } catch(JSONException e) {
       throw new YailRuntimeError("Value failed to convert to JSON.", "JSON Creation Error.");
     }
-  }
-  
-//  /**
-//   * Asks Firebase to store the given value under the given tag
-//   * if no value exists at that location yet.
-//   *
-//   * @param tag The tag to use
-//   * @param valueToStore The value to store. Can be any type of value (e.g.
-//   * number, text, boolean or list).
-//   */
-//  @SimpleFunction
-//  public void InitializeValue(final String tag, final Object valueToStore) {
-//    this.myFirebase.child(tag).addListenerForSingleValueEvent(new ValueEventListener() {
-//      @Override
-//      public void onDataChange(final DataSnapshot snapshot) {
-//        if (snapshot.getValue() == null) {
-//          StoreValue(tag, valueToStore);
-//        } else {
-//          androidUIHandler.post(new Runnable() {
-//            public void run() {
-//              // Signal an event to indicate that the value was
-//              // stored.  We post this to run in the Applcation's main
-//              // UI thread.
-//              GotValue(tag, snapshot.getValue());
-//            }
-//          });
-//        }
-//      }
-//      @Override
-//      public void onCancelled(final FirebaseError error) {
-//        androidUIHandler.post(new Runnable() {
-//          public void run() {
-//            // Signal an event to indicate that the value was
-//            // stored.  We post this to run in the Applcation's main
-//            // UI thread.
-//            FirebaseError(error.getMessage());
-//          }
-//        });
-//      }
-//    });
-//  }
 
-  // The implementation of GetValue uses an event-driven strategy.  
-  // The onSuccess callback returns the response.
-  // The onFailure callback signals a FirebaseError.
+    // perform the store operation
+    this.myFirebase.child(tag).setValue(valueToStore);
+  }
+
   /**
    * GetValue asks Firebase to get the value stored under the given tag.
-   * It will return valueIfTagNotThere if there is no value stored
+   * It will pass valueIfTagNotThere to GotValue if there is no value stored
    * under the tag.
    *
    * @param tag The tag whose value is to be retrieved.
@@ -363,21 +329,30 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
    *                           not exist.
    */
   @SimpleFunction
-  public void GetValue(final String tag/*, final String valueIfTagNotThere*/) {
+  public void GetValue(final String tag, final Object valueIfTagNotThere) {
     this.myFirebase.child(tag).addListenerForSingleValueEvent(new ValueEventListener() {
       @Override
-      public void onDataChange(final DataSnapshot currentData) {
-//        final String value = (snapshot != null)
-//            ? (String) snapshot.getValue() : valueIfTagNotThere;
+      public void onDataChange(final DataSnapshot snapshot) {
+        final AtomicReference<Object> value = new AtomicReference<Object>();
 
-        final Object value = currentData.getValue();
+        // Set value to either the JSON from the Firebase
+        // or the JSON representation of valueIfTagNotThere
+        try {
+          if (snapshot.exists()) {
+            value.set(snapshot.getValue());
+          } else {
+            value.set(JsonUtil.getJsonRepresentation(valueIfTagNotThere));
+          }
+        } catch(JSONException e) {
+          throw new YailRuntimeError("Value failed to convert to JSON.", "JSON Creation Error.");
+        }
 
         androidUIHandler.post(new Runnable() {
           public void run() {
             // Signal an event to indicate that the value was
             // received.  We post this to run in the Application's main
             // UI thread.
-            GotValue(tag, value);
+            GotValue(tag, value.get());
           }
         });
       }
@@ -387,7 +362,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
         androidUIHandler.post(new Runnable() {
           public void run() {
             // Signal an event to indicate that an error occurred.
-            // We post this to run in the Applcation's main
+            // We post this to run in the Application's main
             // UI thread.
             FirebaseError(error.getMessage());
           }
@@ -405,11 +380,11 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
   @SimpleEvent
   public void GotValue(String tag, Object value) {
     try {
-      if(value != null) {
+      if(value != null && value instanceof String) {
         value = JsonUtil.getObjectFromJson((String) value);
       }
     } catch(JSONException e) {
-      throw new YailRuntimeError("Value failed to convert from JSON.", "JSON Creation Error.");
+      throw new YailRuntimeError("Value failed to convert from JSON.", "JSON Retrieval Error.");
     }
 
     // Invoke the application's "GotValue" event handler
@@ -426,11 +401,11 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
   @SimpleEvent
   public void DataChanged(String tag, Object value) {
     try {
-      if(value != null) {
+      if(value != null && value instanceof String) {
         value = JsonUtil.getObjectFromJson((String) value);
       }
     } catch(JSONException e) {
-      throw new YailRuntimeError("Value failed to convert from JSON.", "JSON Creation Error.");
+      throw new YailRuntimeError("Value failed to convert from JSON.", "JSON Retrieval Error.");
     }
 
     // Invoke the application's "DataChanged" event handler
