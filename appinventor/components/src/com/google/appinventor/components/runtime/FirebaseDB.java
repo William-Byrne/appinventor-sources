@@ -27,9 +27,6 @@ import com.google.appinventor.components.common.PropertyTypeConstants;
 import com.google.appinventor.components.common.YaVersion;
 import com.google.appinventor.components.runtime.errors.YailRuntimeError;
 import com.google.appinventor.components.runtime.util.JsonUtil;
-import com.google.appinventor.components.runtime.util.YailList;
-import gnu.lists.FString;
-import gnu.math.IntFraction;
 import org.json.JSONException;
 
 import android.util.Log;
@@ -288,7 +285,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
      As things stand, any operation performed on a tag that depends on the
      existing data at the tag is vulnerable to concurrent modification bugs.
      This is caused by the inherent non-atomicity of such an operation using
-     the existing component blocks. One way to solve this problem would be to
+     the current component blocks. One way to solve this problem would be to
      use the Firebase#runTransaction(Transaction.Handler) method to run such an
      operation atomically. However, that entails either creating a RunTransaction
      block that accepts both an operation to perform on the cloud variable and
@@ -296,6 +293,16 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
      operations on cloud variables (e.g. increment, decrement, append to list, etc)
      atomically. Since both of those solutions require involved implementations,
      this issue is being left for Version 2.
+
+     Additional Documentation relating to Firebase Transactions can be found below:
+
+     https://www.firebase.com/docs/android/guide/saving-data.html#section-transactions
+
+     https://www.firebase.com/docs/java-api/javadoc/com/firebase/client/Transaction.html,
+
+     https://www.firebase.com/docs/java-api/javadoc/com/firebase/client/Transaction.Handler.html,
+
+     https://www.firebase.com/docs/java-api/javadoc/com/firebase/client/Firebase.html#runTransaction-com.firebase.client.Transaction.Handler-
    */
 
   /**
@@ -375,7 +382,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
    * Indicates that a GetValue request has succeeded.
    *
    * @param value the value that was returned. Can be any type of value
-   * (e.g. number, text, boolean or list).
+   *              (e.g. number, text, boolean or list).
    */
   @SimpleEvent
   public void GotValue(String tag, Object value) {
