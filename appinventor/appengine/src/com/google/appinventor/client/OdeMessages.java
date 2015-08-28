@@ -5298,7 +5298,11 @@ public interface OdeMessages extends Messages {
   @Description("")
   String YandexTranslateHelpStringComponentPallette();
 
-  @DefaultMessage("A non-visible component allowing you to store data in the \"Cloud\" so that it can be shared by all the users of your app.")
+  @DefaultMessage("A non-visible component allowing you to store data on a Web database powered by Firebase. " +
+      "This allows the users of your app to share data with each other. " +
+      "By default, data will be stored in App Inventor''s shared Firebase database. " +
+      "Otherwise, you can specify the URL for your own Firebase in the \"FirebaseURL\" property. " +
+      "Learn more at <a target=\"_blank\" href=\"http://www.firebase.com\">Firebase.com</a>.")
   @Description("")
   String FirebaseDBHelpStringComponentPallette();
 

@@ -352,10 +352,10 @@ public class YaVersion {
   // For YOUNG_ANDROID_VERSION 137:
   // - FORM_COMPONENT_VERSION was incremented to 18.
   // - MEDIASTORE_COMPONENT_VERSION was incremented to 1
-  // For YOUNG_ANDROID_VERSION 139:
+  // For YOUNG_ANDROID_VERSION 138:
   // - FIREBASE_COMPONENT_VERSION was incremented to 1
 
-  public static final int YOUNG_ANDROID_VERSION = 139;
+  public static final int YOUNG_ANDROID_VERSION = 138;
 
   // ............................... Blocks Language Version Number ...............................
 
