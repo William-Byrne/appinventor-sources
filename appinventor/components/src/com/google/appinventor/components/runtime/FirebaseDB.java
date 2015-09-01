@@ -61,7 +61,7 @@ public class FirebaseDB extends AndroidNonvisibleComponent implements Component 
 
   private static final String LOG_TAG = "Firebase";
   private static final String DEFAULT_URL =
-      "https://resplendent-inferno-8682.firebaseio.com/";
+      "";
 
   private String firebaseURL;
   private String developerBucket;
