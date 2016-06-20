@@ -153,4 +153,18 @@ public interface Component {
   static final String DEFAULT_VALUE_TEXT_TO_SPEECH_COUNTRY = "";
   static final String DEFAULT_VALUE_TEXT_TO_SPEECH_LANGUAGE = "";
 
+  //RaspberryPi Server Component default values
+  public static final String RASPBERRYPI_SERVER_VALUE = "Pi2B+"; //Defaults to "Pi2 B+" which is the most prevalent model as of June 2016
+  public static final String RASPBERRYPI_SERVER_IPV4_VALUE = "192.168.x.x";
+  public static final int RASPBERRYPI_SERVER_PORT_VALUE = 1883;
+  public static final int RASPBERRYPI_SERVER_QOS_VALUE = 1;
+
+  //RaspberryPi Client Component default values
+  public static final int RASPBERRYPI_PINCLIENT_NUMBER_VALUE = 1;
+  public static final boolean RASPBERRYPI_PINCLIENT_STATE_VALUE = false;
+  public static final int RASPBERRYPI_PINCLIENT_DIRECTION_VALUE = 0;
+  public static final int RASPBERRYPI_PINCLIENT_MODE_VALUE = 0;
+  public static final int RASPBERRYPI_PINCLIENT_PULLRESISTANCE_VALUE = 1;
+
+
 }

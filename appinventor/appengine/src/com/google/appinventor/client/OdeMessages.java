@@ -6243,5 +6243,141 @@ public interface OdeMessages extends Messages {
   @DefaultMessage("Reload")
   @Description("")
   String reloadWindow();
+  
+  // =========== RaspberryPiPinClient
+  
+  /* Properties */
+  
+  @DefaultMessage("Direction")
+  @Description("")
+  String DirectionProperties();
 
+  @DefaultMessage("ExternalMQTTBroker")
+  @Description("")
+  String ExternalMQTTBrokerProperties();
+
+  @DefaultMessage("LastWillMessage")
+  @Description("")
+  String LastWillMessageProperties();
+
+  @DefaultMessage("LastWillTopic")
+  @Description("")
+  String LastWillTopicProperties();
+
+  @DefaultMessage("MQTTMessage")
+  @Description("")
+  String MqttMessageProperties();
+
+  @DefaultMessage("PinMode")
+  @Description("")
+  String PinModeProperties();
+
+  @DefaultMessage("DeviceName")
+  @Description("")
+  String DeviceNameProperties();
+
+  @DefaultMessage("PinNumber")
+  @Description("")
+  String PinNumberProperties();
+
+  @DefaultMessage("PullResistance")
+  @Description("")
+  String PullResistanceProperties();
+
+  @DefaultMessage("PinState")
+  @Description("")
+  String PinStateProperties();
+
+  @DefaultMessage("MqttTopic")
+  @Description("")
+  String MqttTopicProperties();
+
+  /* Events */
+  
+  @DefaultMessage("MessageReceived")
+  @Description("")
+  String MqttMessageReceivedEvents();
+
+  @DefaultMessage("PinConnected")
+  @Description("")
+  String PinConnectedEvents();
+
+  @DefaultMessage("PinStateChanged")
+  @Description("")
+  String PinStateChangedEvents();
+  
+  /* Methods */
+
+  @DefaultMessage("Publish")
+  @Description("")
+  String PublishMethods();
+
+  @DefaultMessage("Subscribe")
+  @Description("")
+  String SubscribeMethods();
+
+  @DefaultMessage("Toggle")
+  @Description("")
+  String ToggleMethods();
+  
+  // =========== RaspberryPiServer
+  
+  /* Properties */
+
+  @DefaultMessage("Ipv4Address")
+  @Description("")
+  String Ipv4AddressProperties();
+
+  @DefaultMessage("Model")
+  @Description("")
+  String ModelProperties();
+
+  @DefaultMessage("Port")
+  @Description("")
+  String PortProperties();
+
+  @DefaultMessage("Qos")
+  @Description("")
+  String QosProperties();
+
+  /* Events */
+
+  @DefaultMessage("ClientConnected")
+  @Description("")
+  String ClientConnectedEvents();
+
+  @DefaultMessage("ClientDisconnected")
+  @Description("")
+  String ClientDisconnectedEvents();
+
+  @DefaultMessage("HasShutdown")
+  @Description("")
+  String HasShutdownEvents();
+  
+  /* Methods */
+
+  @DefaultMessage("ConnectedClients")
+  @Description("")
+  String ConnectedClientsMethods();
+
+  @DefaultMessage("DisconnectedClients")
+  @Description("")
+  String DisconnectedClientsMethods();
+
+  @DefaultMessage("HasPinMethods")
+  @Description("")
+  String HasPinMethods();
+  
+  @DefaultMessage("IsClientConnected")
+  @Description("")
+  String IsClientConnectedMethods();
+
+  @DefaultMessage("IsShutdown")
+  @Description("")
+  String IsShutdownMethods();
+
+  @DefaultMessage("Shutdown")
+  @Description("")
+  String ShutdownMethods();
+ 
 }
