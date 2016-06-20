@@ -868,6 +868,9 @@ public class YaVersion {
   // - The OtherPlayerStarted event was added.
 
   public static final int PLAYER_COMPONENT_VERSION = 6;
+  
+  //For RASPBERRYPI_COMPONENT_VERSION: Initial Version
+  public static final int RASPBERRYPI_COMPONENT_VERSION = 1;
 
   public static final int SHARING_COMPONENT_VERSION = 1;
 

@@ -130,6 +130,8 @@ public final class SimpleComponentDescriptor {
     bundledImages.put("images/yandex.png", images.yandex());
     bundledImages.put("images/proximitysensor.png", images.proximitysensor());
     bundledImages.put("images/extension.png", images.extension());
+    bundledImages.put("images/raspberryPi.png", images.raspberryPiPinClient());
+    bundledImages.put("images/raspberryPi.png", images.raspberryPiServer());
 
     imagesInitialized = true;
   }

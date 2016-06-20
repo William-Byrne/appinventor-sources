@@ -214,6 +214,18 @@ public interface Images extends Resources {
   ImageResource radiobutton();
 
   /**
+   * Designer palette item: raspberryPi component
+   */
+  @Source("com/google/appinventor/images/raspberryPi.png")
+  ImageResource raspberryPiServer();
+
+  /**
+   * Designer palette item: raspberryPiPinClient component
+   */
+  @Source("com/google/appinventor/images/raspberryPi.png")
+  ImageResource raspberryPiPinClient();
+
+  /**
    * Designer palette item: textbox component
    */
   @Source("com/google/appinventor/images/textbox.png")
