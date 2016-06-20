@@ -22,10 +22,10 @@ import com.google.appinventor.components.runtime.util.ErrorMessages;
  * The broker, and thus the RaspberryPiServer has an IP address that clients can
  * connect via TCP/IP. For the RaspberryPi component, it is necessary to have
  * the MQTT clients such as sensors and LED outputs to be subscribed to certain
- * topics via the broker. The app developer can opt to connect to external MQTT
+ * topics via the broker. The App Inventor developer can opt to connect to external MQTT
  * brokers or run an MQTT broker on the Raspberry PI device.
  * 
- * @author thilanka
+ * @author Thilanka Munasinghe (thilankawillbe@gmail.com)
  */
 @DesignerComponent(description = "<p>A non-visible component that models the Raspberry Pi and acts as "
     + "an MQTT broker that relays messages between the RaspberryPiPinClients and other "

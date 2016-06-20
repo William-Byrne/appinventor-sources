@@ -26,7 +26,7 @@ import com.google.appinventor.components.runtime.util.ErrorMessages;
  * can subscribe to the topic “message”, and can be programmed to flash in a
  * different sequence when a message is received.
  * 
- * @author thilanka
+ * @author Thilanka Munasinghe (thilankawillbe@gmail.com)
  */
 @DesignerComponent(version = YaVersion.RASPBERRYPI_COMPONENT_VERSION,
         description = "<p>A non-visible component that models any device that can be attached to a pin of the Raspberry Pi.</p>",
