@@ -6316,10 +6316,18 @@ public interface OdeMessages extends Messages {
   @Description("")
   String SubscribeMethods();
 
+  @DefaultMessage("Test")
+  @Description("")
+  String TestMethods();
+
   @DefaultMessage("Toggle")
   @Description("")
   String ToggleMethods();
   
+  @DefaultMessage("Unsubscribe")
+  @Description("")
+  String UnsubscribeMethods();
+
   // =========== RaspberryPiServer
   
   /* Properties */

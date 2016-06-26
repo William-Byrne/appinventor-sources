@@ -393,8 +393,11 @@ public class YaVersion {
   // - FIREBASE_COMPONENT_VERSION was incremented to 3
   // For YOUNG_ANDROID_VERSION 157:
   // - LABEL_COMPONENT_VERSION was incremented to 4
+  //For YOUNG_ANDROID_VERSION 158:
+  // - RASPBERRYPI_COMPONENT_VERSION was added as 1
 
   public static final int YOUNG_ANDROID_VERSION = 157;
+  
 
   // ............................... Blocks Language Version Number ...............................
 
