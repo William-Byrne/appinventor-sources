@@ -41,7 +41,7 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
   private static final boolean DEBUG = true;
   private final static String LOG_TAG = "RaspberryPiServer";
 
-  private final ComponentContainer container;
+//  private final ComponentContainer container;
   private String model;
   private String ipv4Address;
   private int port;
@@ -57,7 +57,7 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
    */
   protected RaspberryPiServer(ComponentContainer pContainer) {
     super(pContainer.$form());
-    container = pContainer;
+//    container = pContainer;
   }
 
   /**
