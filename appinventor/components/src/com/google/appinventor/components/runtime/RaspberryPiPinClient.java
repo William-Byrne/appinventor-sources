@@ -64,31 +64,24 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   private String lastWillMessage;
   private String externalMQTTBroker;
 
-  private static final String THREAD_NAME = "Thread[" + LOG_TAG + "]"; // Handler
-  // Thread
-  // ID
-  private static String BROKER = "192.168.0.9"; // Broker URL or IP Address
-  private static int PORT = 1883; // Broker Port
-  public static final int QOS_0 = 0; // QOS Level 0 ( Delivery Once no
-  // confirmation )
-  public static final int QOS_1 = 1; // QOS Level 1 ( Delevery at least once
-  // with confirmation )
-  public static final int QOS_2 = 2; // QOS Level 2 ( Delivery only once with
-  // confirmation with handshake )
+  private static final String THREAD_NAME = "Thread[" + LOG_TAG + "]"; 
+  
+  public static final int QOS_0 = 0; // Delivery Once no confirmation
+  public static final int QOS_1 = 1; // Delivery at least once with confirmation
+  public static final int QOS_2 = 2; // Delivery only once with confirmation with handshake
   private static final boolean CLEAN_SESSION = true; // Start a clean session?
   private static final String MQTT_URL_FORMAT = "tcp://%s:%d"; // URL Format
   private static final String DEVICE_ID_FORMAT = "andr_%s"; // Device ID Format
 
   private String mDeviceId; // Device ID, Secure.ANDROID_ID
   private MqttConnectOptions mOpts; // Connection Options
-  private MqttClient mClient; // Mqtt Client
+  private MqttClient mClient; // MQTT Client
   private boolean mStarted = false; // Is the Client started?
   private Handler mConnHandler; // Seperate Handler thread for networking
   private MemoryPersistence mMemStore; // MemoryStore
 
   private Handler parentHandler; // Handler from main thread
-  private ConnectivityManager mConnectivityManager; // To check for connectivity
-  // changes
+  private ConnectivityManager mConnectivityManager; // To check for connectivity changes
 
   /**
    * Creates a new AndroidNonvisibleComponent.
@@ -236,20 +229,30 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
     return lastWillMessage;
   }
 
-  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
-  @SimpleProperty(description = "In addition to the RaspberryPi Server acting as the MQTTBroker, "
-      + "a device attached a pin may optionally connect to an external MQTT broker identified by "
-      + "the ip address and port of the external MQTT broker.", userVisible = true)
-  public void ExternalMQTTBroker(String pExternalMQTTBroker) {
-    externalMQTTBroker = pExternalMQTTBroker;
-  }
+  // TODO: Refactor this: Have a top level MQTTBroker and have the
+  // RaspberryPiServer subclass from that?
 
-  @SimpleProperty(description = "In addition to the RaspberryPi Server acting as the MQTTBroker, "
-      + "a device attached a pin may optionally connect to an external MQTT broker identified by "
-      + "the ip address and port of the external MQTT broker.", category = PropertyCategory.BEHAVIOR, userVisible = true)
-  public String ExternalMQTTBroker() {
-    return externalMQTTBroker;
-  }
+  // @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
+  // @SimpleProperty(description = "In addition to the RaspberryPi Server acting
+  // as the MQTTBroker, "
+  // + "a device attached a pin may optionally connect to an external MQTT
+  // broker identified by "
+  // + "the ip address and port of the external MQTT broker.", userVisible =
+  // true)
+  // public void ExternalMQTTBroker(String pExternalMQTTBroker) {
+  // externalMQTTBroker = pExternalMQTTBroker;
+  // }
+  //
+  // @SimpleProperty(description = "In addition to the RaspberryPi Server acting
+  // as the MQTTBroker, "
+  // + "a device attached a pin may optionally connect to an external MQTT
+  // broker identified by "
+  // + "the ip address and port of the external MQTT broker.", category =
+  // PropertyCategory.BEHAVIOR, userVisible = true)
+  // public String ExternalMQTTBroker() {
+  // return externalMQTTBroker;
+  // }
+  //
 
   @SimpleFunction(description = "Changes the state of the pin from HIGH to LOW or vice versa.")
   public void Toggle() {
@@ -257,62 +260,59 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   }
 
   @SimpleFunction(description = "Publish a message on the subject via the mqttBrokerEndpoint given. The Publish method, "
-      + " takes three Parameters such as String pMqttBrokerEndpoint , String pTopic and  String pMessage . ")
-  public void Publish(String pMqttBrokerEndpoint, String pTopic, String pMessage) {
-  }
-
-  @SimpleFunction(description = "Subscribes to a topic on the given subject at the given mqttBrokerEndpoint. The Subsribe, "
-      + " method has two parameters such as  String pMqttBrokerEndpoint, String pTopic . ")
-  public void Subscribe(String pMqttBrokerEndpoint, String pTopic) {
-  }
-
-  @SimpleFunction(description = "UnSubscribes to a topic on the given subject. The UnSubsribe, "
-      + " method takes the parameter String pTopic . ")
-  public void Unsubscribe(String pTopic) {
-    // TODO
-    // We have to implement an UnSubscribe method for clients to unsubscribe if
-    // needed. (stop listening to the messages)
-  }
-
-  @SimpleFunction(description = "Test function to see if the paho MQTT client works")
-  public void Test() {
+      + " takes three Parameters such as RaspberryPiServer, Topic and Message . ")
+  public void Publish(final RaspberryPiServer pRaspberryPiServer, final String pTopic, final String pMessage) {
 
     if (DEBUG) {
-      Log.d(LOG_TAG, "Calling the Test method in RaspPinClient.");
+      Log.d(LOG_TAG, "Calling the Publish method in RaspPinClient.");
     }
 
     if (!isConnected()) {
-      connect(BROKER, PORT);
+      if (DEBUG) {
+	Log.d(LOG_TAG, "pRaspberryPiServer.Ipv4Address() =" + pRaspberryPiServer.Ipv4Address());
+	Log.d(LOG_TAG, "Before pRaspberryPiServer.Port() =" + pRaspberryPiServer.Port());
+      }
+      connect(pRaspberryPiServer.Ipv4Address(), pRaspberryPiServer.Port());
     }
 
     mConnHandler.post(new Runnable() {
       @Override
       public void run() {
 
-	String topic = "temperature";
-	String content = "25";
 	int qos = 2;
 
 	try {
 	  if (DEBUG) {
-	    Log.d(LOG_TAG, "Attempting to send a message:  Topic:\t" + topic + "  Message:\t" + content);
+	    Log.d(LOG_TAG, "Attempting to send a message:  Topic:\t" + pTopic + "  Message:\t" + pMessage);
 	  }
 
-	  MqttMessage message = new MqttMessage(content.getBytes());
+	  MqttMessage message = new MqttMessage(pMessage.getBytes());
 	  message.setQos(qos);
-	  mClient.publish(topic, message);
+	  mClient.publish(pTopic, message);
 	  if (DEBUG) {
-	    Log.d(LOG_TAG, "Sent a message:  Topic:\t" + topic + "  Message:\t" + content);
+	    Log.d(LOG_TAG, "Sent a message:  Topic:\t" + pTopic + "  Message:\t" + pMessage);
 	  }
 	  mClient.disconnect();
 	} catch (MqttException e) {
-	  Log.e(LOG_TAG,
-	      "Failed to send a message:  Topic:\t" + topic + "  Message:\t" + content + "\tError: " + e.getMessage());
+	  Log.e(LOG_TAG, "Failed to send a message:  Topic:\t" + pTopic + "  Message:\t" + pMessage + "\tError: "
+              + e.getMessage());
 	  e.printStackTrace();
 	}
       }
     });
+  }
 
+  @SimpleFunction(description = "Subscribes to a topic on the given subject at the given mqttBrokerEndpoint. The Subsribe, "
+      + " method has two parameters such as  String pMqttBrokerEndpoint, String pTopic . ")
+  public void Subscribe(RaspberryPiServer pRaspberryPiServer, String pTopic) {
+  }
+
+  @SimpleFunction(description = "UnSubscribes to a topic on the given subject. The UnSubsribe, "
+      + " method takes the parameter String pTopic . ")
+  public void Unsubscribe(RaspberryPiServer pRaspberryPiServer, String pTopic) {
+    // TODO
+    // We have to implement an UnSubscribe method for clients to unsubscribe if
+    // needed. (stop listening to the messages)
   }
 
   /**
@@ -324,14 +324,13 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
    *          The port to connect on
    */
   private synchronized void connect(final String pBrokerIPAddress, final int pBrokerPort) {
-    BROKER = pBrokerIPAddress;
-    PORT = pBrokerPort;
-    String url = String.format(Locale.US, MQTT_URL_FORMAT, BROKER, PORT);
+    if (isConnected()) {
+      return;
+    }
+    String url = String.format(Locale.US, MQTT_URL_FORMAT, pBrokerIPAddress, pBrokerPort);
     if (DEBUG) {
       Log.d(LOG_TAG, "Connecting with URL: " + url);
     }
-    if (isConnected())
-      return;
     try {
       if (DEBUG) {
 	Log.d(LOG_TAG, "Connecting...");
@@ -354,7 +353,8 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 	  }
 
 	} catch (MqttException e) {
-	  Log.e(LOG_TAG, "Unable to connect to the RaspberryPiSever with address " + BROKER + ":" + PORT);
+	  Log.e(LOG_TAG,
+              "Unable to connect to the RaspberryPiSever with address " + pBrokerIPAddress + ":" + pBrokerPort);
 	  e.printStackTrace();
 	}
       }
@@ -375,13 +375,13 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   }
 
   @SimpleEvent(description = "Event handler to return if the state of the pin changed from HIGH to LOW, or vice versa.")
-  public boolean PinStateChanged() {
+  public boolean PinStateChanged(RaspberryPiServer pRaspberryPiServer) {
     // TODO
     return false;
   }
 
   @SimpleEvent(description = "Event handler when the pin is connected to a device.")
-  public boolean PinConnected() {
+  public boolean PinConnected(RaspberryPiServer pRaspberryPiServer) {
     // TODO
     return false;
   }

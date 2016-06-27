@@ -41,7 +41,6 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
   private static final boolean DEBUG = true;
   private final static String LOG_TAG = "RaspberryPiServer";
 
-//  private final ComponentContainer container;
   private String model;
   private String ipv4Address;
   private int port;
@@ -55,9 +54,8 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
    * @param container
    *          the component will be placed in
    */
-  protected RaspberryPiServer(ComponentContainer pContainer) {
+  public RaspberryPiServer(ComponentContainer pContainer) {
     super(pContainer.$form());
-//    container = pContainer;
   }
 
   /**
@@ -132,7 +130,7 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
       userVisible = true)
   public void Port(int pPort) {
     port = pPort;
-    // TODO Validate the pins
+    // TODO Validate the port
   }
 
   /**

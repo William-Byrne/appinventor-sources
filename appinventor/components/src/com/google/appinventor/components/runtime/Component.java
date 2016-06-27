@@ -155,9 +155,9 @@ public interface Component {
 
   //RaspberryPi Server Component default values
   public static final String RASPBERRYPI_SERVER_VALUE = "Pi2B+"; //Defaults to "Pi2 B+" which is the most prevalent model as of June 2016
-  public static final String RASPBERRYPI_SERVER_IPV4_VALUE = "192.168.x.x";
+  public static final String RASPBERRYPI_SERVER_IPV4_VALUE = "192.168.0.9";
   public static final int RASPBERRYPI_SERVER_PORT_VALUE = 1883;
-  public static final int RASPBERRYPI_SERVER_QOS_VALUE = 1;
+  public static final int RASPBERRYPI_SERVER_QOS_VALUE = 2;
 
   //RaspberryPi Client Component default values
   public static final int RASPBERRYPI_PINCLIENT_NUMBER_VALUE = 1;
