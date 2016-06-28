@@ -6252,6 +6252,10 @@ public interface OdeMessages extends Messages {
   @Description("")
   String DirectionProperties();
 
+  @DefaultMessage("RaspberryPiServer")
+  @Description("")
+  String RaspberryPiServerProperties();
+
   @DefaultMessage("ExternalMQTTBroker")
   @Description("")
   String ExternalMQTTBrokerProperties();

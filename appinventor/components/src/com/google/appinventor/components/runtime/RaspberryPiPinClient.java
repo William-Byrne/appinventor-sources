@@ -3,6 +3,7 @@ package com.google.appinventor.components.runtime;
 import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.Settings.Secure;
@@ -11,7 +12,10 @@ import android.util.Log;
 import com.google.appinventor.components.annotations.DesignerProperty;
 
 import java.util.Locale;
+import java.util.Map;
 
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -29,6 +33,8 @@ import com.google.appinventor.components.annotations.UsesPermissions;
 import com.google.appinventor.components.common.ComponentCategory;
 import com.google.appinventor.components.common.PropertyTypeConstants;
 import com.google.appinventor.components.common.YaVersion;
+import com.google.appinventor.components.runtime.errors.ConnectionError;
+import com.google.appinventor.components.runtime.errors.RuntimeError;
 
 /**
  * RaspberryPiPinClient models any device attached to a GPIO pin of the
@@ -47,7 +53,7 @@ import com.google.appinventor.components.common.YaVersion;
 @UsesPermissions(permissionNames = "android.permission.INTERNET, " + "android.permission.WAKE_LOCK, "
     + "android.permission.ACCESS_NETWORK_STATE, " + "android.permission.WRITE_EXTERNAL_STORAGE")
 @UsesLibraries(libraries = "org.eclipse.paho.android.service-1.0.2.jar, org.eclipse.paho.client.mqttv3-1.0.2.jar")
-public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements Component {
+public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements Component, MqttCallback {
 
   private static final boolean DEBUG = true;
   private final static String LOG_TAG = "RaspberryPiPinClient";
@@ -64,11 +70,12 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   private String lastWillMessage;
   private String externalMQTTBroker;
 
-  private static final String THREAD_NAME = "Thread[" + LOG_TAG + "]"; 
-  
+  private static final String THREAD_NAME = "Thread[" + LOG_TAG + "]";
+
   public static final int QOS_0 = 0; // Delivery Once no confirmation
   public static final int QOS_1 = 1; // Delivery at least once with confirmation
-  public static final int QOS_2 = 2; // Delivery only once with confirmation with handshake
+  public static final int QOS_2 = 2; // Delivery only once with confirmation
+  // with handshake
   private static final boolean CLEAN_SESSION = true; // Start a clean session?
   private static final String MQTT_URL_FORMAT = "tcp://%s:%d"; // URL Format
   private static final String DEVICE_ID_FORMAT = "andr_%s"; // Device ID Format
@@ -81,7 +88,9 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   private MemoryPersistence mMemStore; // MemoryStore
 
   private Handler parentHandler; // Handler from main thread
-  private ConnectivityManager mConnectivityManager; // To check for connectivity changes
+  private ConnectivityManager mConnectivityManager; // To check for connectivity
+  // changes
+  private RaspberryPiServer raspberryPiServer;
 
   /**
    * Creates a new AndroidNonvisibleComponent.
@@ -113,6 +122,16 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
     mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
     parentHandler = handler;
 
+  }
+
+  @SimpleProperty(description = "The RaspberryPiServer component this pin client is connected to", userVisible = true)
+  public void RaspberryPiServer(RaspberryPiServer pRaspberryPiServer) {
+    raspberryPiServer = pRaspberryPiServer;
+  }
+
+  @SimpleProperty(description = "The RaspberryPiServer component this pin client is connected to", userVisible = true)
+  public RaspberryPiServer RaspberryPiServer() {
+    return raspberryPiServer;
   }
 
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_INTEGER, defaultValue = Component.RASPBERRYPI_PINCLIENT_NUMBER_VALUE
@@ -261,18 +280,14 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
   @SimpleFunction(description = "Publish a message on the subject via the mqttBrokerEndpoint given. The Publish method, "
       + " takes three Parameters such as RaspberryPiServer, Topic and Message . ")
-  public void Publish(final RaspberryPiServer pRaspberryPiServer, final String pTopic, final String pMessage) {
+  public void Publish(final String pTopic, final String pMessage) {
 
     if (DEBUG) {
       Log.d(LOG_TAG, "Calling the Publish method in RaspPinClient.");
     }
 
     if (!isConnected()) {
-      if (DEBUG) {
-	Log.d(LOG_TAG, "pRaspberryPiServer.Ipv4Address() =" + pRaspberryPiServer.Ipv4Address());
-	Log.d(LOG_TAG, "Before pRaspberryPiServer.Port() =" + pRaspberryPiServer.Port());
-      }
-      connect(pRaspberryPiServer.Ipv4Address(), pRaspberryPiServer.Port());
+      connect();
     }
 
     mConnHandler.post(new Runnable() {
@@ -288,6 +303,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
 	  MqttMessage message = new MqttMessage(pMessage.getBytes());
 	  message.setQos(qos);
+
 	  mClient.publish(pTopic, message);
 	  if (DEBUG) {
 	    Log.d(LOG_TAG, "Sent a message:  Topic:\t" + pTopic + "  Message:\t" + pMessage);
@@ -295,7 +311,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 	  mClient.disconnect();
 	} catch (MqttException e) {
 	  Log.e(LOG_TAG, "Failed to send a message:  Topic:\t" + pTopic + "  Message:\t" + pMessage + "\tError: "
-              + e.getMessage());
+	      + e.getMessage());
 	  e.printStackTrace();
 	}
       }
@@ -304,12 +320,38 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
   @SimpleFunction(description = "Subscribes to a topic on the given subject at the given mqttBrokerEndpoint. The Subsribe, "
       + " method has two parameters such as  String pMqttBrokerEndpoint, String pTopic . ")
-  public void Subscribe(RaspberryPiServer pRaspberryPiServer, String pTopic) {
+  public synchronized void Subscribe(final String pTopic) {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Calling the Subscribe method with topic " + pTopic + ".");
+    }
+
+    if (!isConnected()) {
+      connect();
+    }
+
+    mConnHandler.post(new Runnable() {
+      @Override
+      public void run() {
+	try {
+	  if (DEBUG) {
+	    Log.d(LOG_TAG, "Subscribing to topic:\t " + pTopic + ".");
+	  }
+	  if (mClient.getTopic(pTopic) != null) {
+	    mClient.subscribe(pTopic, 0);
+	    if (DEBUG) {
+	      Log.d(LOG_TAG, "Subscribed to topic:\t" + pTopic);
+	    }
+	  }
+	} catch (MqttException e) {
+	  Log.e(LOG_TAG, "Failed to subscribe:  Topic:\t" + pTopic + "\tError: " + e.getMessage());
+	}
+      }
+    });
   }
 
-  @SimpleFunction(description = "UnSubscribes to a topic on the given subject. The UnSubsribe, "
+  @SimpleFunction(description = "Unsubscribes to a topic on the given subject. The UnSubsribe, "
       + " method takes the parameter String pTopic . ")
-  public void Unsubscribe(RaspberryPiServer pRaspberryPiServer, String pTopic) {
+  public void Unsubscribe(String pTopic) {
     // TODO
     // We have to implement an UnSubscribe method for clients to unsubscribe if
     // needed. (stop listening to the messages)
@@ -323,11 +365,19 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
    * @param pBrokerPort
    *          The port to connect on
    */
-  private synchronized void connect(final String pBrokerIPAddress, final int pBrokerPort) {
+  private synchronized void connect() {
     if (isConnected()) {
       return;
     }
-    String url = String.format(Locale.US, MQTT_URL_FORMAT, pBrokerIPAddress, pBrokerPort);
+
+    if (raspberryPiServer == null) {
+      throw new ConnectionError("The RaspberryPiServer component has not been set!");
+    }
+
+    final String serverIPAddress = raspberryPiServer.Ipv4Address();
+    final int serverPort = raspberryPiServer.Port();
+
+    String url = String.format(Locale.US, MQTT_URL_FORMAT, serverIPAddress, serverPort);
     if (DEBUG) {
       Log.d(LOG_TAG, "Connecting with URL: " + url);
     }
@@ -346,6 +396,8 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 	try {
 	  mClient.connect(mOpts);
 
+	  mClient.setCallback(RaspberryPiPinClient.this);
+
 	  mStarted = true; // Service is now connected
 
 	  if (DEBUG) {
@@ -354,7 +406,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
 	} catch (MqttException e) {
 	  Log.e(LOG_TAG,
-              "Unable to connect to the RaspberryPiSever with address " + pBrokerIPAddress + ":" + pBrokerPort);
+	      "Unable to connect to the RaspberryPiSever with address " + serverIPAddress + ":" + serverPort);
 	  e.printStackTrace();
 	}
       }
@@ -375,21 +427,114 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   }
 
   @SimpleEvent(description = "Event handler to return if the state of the pin changed from HIGH to LOW, or vice versa.")
-  public boolean PinStateChanged(RaspberryPiServer pRaspberryPiServer) {
-    // TODO
-    return false;
+  public void PinStateChanged() {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "RaspberryPi pin " + pinNumber + " state changed to " + pinState + ".");
+    }
+    // TODO: what triggers a pin state change?
+    EventDispatcher.dispatchEvent(this, "PinStateChanged");
   }
 
   @SimpleEvent(description = "Event handler when the pin is connected to a device.")
-  public boolean PinConnected(RaspberryPiServer pRaspberryPiServer) {
-    // TODO
-    return false;
+  public void PinConnected() {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "RaspberryPi pin " + pinNumber + " connected.");
+    }
+    // TODO what is the condition here?
+    EventDispatcher.dispatchEvent(this, "PinConnected");
   }
 
   @SimpleEvent(description = "Event handler when a message is received through MQTT.")
-  public boolean MqttMessageReceived(String pMessage) {
-    // TODO
-    return false;
+  public void MqttMessageReceived(String pTopic, String pMessage) {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Mqtt Message " + pMessage + " received on subject " + pTopic + ".");
+    }
+    if (pTopic != null && pMessage != null && pMessage.length() > 0) {
+      EventDispatcher.dispatchEvent(this, "MqttMessageReceived", pTopic, pMessage);
+    }
   }
 
+  /**
+   * Attempts to reconnect if network is available when connection is lost
+   *
+   * @param Throwable
+   *          pThrowable
+   */
+  @Override
+  public void connectionLost(Throwable pThrowable) {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Connection Lost...");
+    }
+    //TODO this method seems to get called a lot! Investigate why.
+    mClient = null;
+
+    if (isNetworkAvailable()) {
+      reconnectIfNecessary();
+    }
+  }
+
+  /**
+   * Checks network info
+   *
+   * @return boolean true if we are connected false otherwise
+   */
+  private boolean isNetworkAvailable() {
+    NetworkInfo info = mConnectivityManager.getActiveNetworkInfo();
+
+    return info != null && info.isConnected();
+  }
+
+  /**
+   * Checks the current connectivity and reconnects if it is required.
+   */
+  private synchronized void reconnectIfNecessary() {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Reconnect if necessary called");
+    }
+    if (mStarted && mClient == null) {
+      connect();
+    }
+  }
+
+  /**
+   * Called when a message is successfully sent
+   *
+   * @param pMqttDeliveryToken
+   *          delivery token
+   */
+  @Override
+  public void deliveryComplete(IMqttDeliveryToken pMqttDeliveryToken) {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Delivery Successful!");
+    }
+    // TODO: show a notification to the user?
+
+  }
+
+  /**
+   * Called when a message arrives, forwards it to registered listeners
+   *
+   * @param pTopic
+   *          The topic the message arrived from
+   * @param pMqttMessage
+   *          The contents of the message
+   */
+  @Override
+  public void messageArrived(final String pTopic, final MqttMessage pMqttMessage) {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "  Topic:\t" + pTopic + "  Message:\t" + new String(pMqttMessage.getPayload()) + "  QoS:\t"
+	  + pMqttMessage.getQos());
+    }
+
+    // TODO: check without creating a new thread and running it in the parent
+    // handler
+    parentHandler.post(new Runnable() {
+      @Override
+      public void run() {
+	String payloadLiteral = new String(pMqttMessage.getPayload());
+	MqttMessageReceived(pTopic, payloadLiteral);
+      }
+    });
+
+  }
 }
