@@ -6302,6 +6302,14 @@ public interface OdeMessages extends Messages {
   @Description("")
   String MqttMessageReceivedEvents();
 
+  @DefaultMessage("MessageSent")
+  @Description("")
+  String MqttMessageSentEvents();
+
+  @DefaultMessage("ConnectionLost")
+  @Description("")
+  String MqttConnectionLostEvents();
+
   @DefaultMessage("PinConnected")
   @Description("")
   String PinConnectedEvents();
