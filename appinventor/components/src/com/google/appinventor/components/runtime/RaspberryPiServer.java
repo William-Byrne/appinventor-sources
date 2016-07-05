@@ -202,7 +202,8 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
       Log.d(LOG_TAG, "Shutting down the RaspberryPi Server...");
     }
     shutdown = true;
-    mRaspberryPiMessagingService.publish(Topics.INTERNAL_TOPIC, Messages.constructInternalMessage(Messages.Action.SHUTDOWN));
+    mRaspberryPiMessagingService.publish(Topics.INTERNAL_TOPIC,
+        Messages.constructInternalMessage(Messages.Action.SHUTDOWN));
     if (DEBUG) {
       Log.d(LOG_TAG, "Completed shutting down the RaspberryPi Server.");
     }

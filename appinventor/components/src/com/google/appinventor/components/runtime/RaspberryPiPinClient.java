@@ -69,7 +69,6 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
    */
   public RaspberryPiPinClient(ComponentContainer pContainer) {
     super(pContainer.$form());
-
     if (DEBUG) {
       Log.d(LOG_TAG, "Inside the RaspberryPiPinclient Constructor.");
     }
