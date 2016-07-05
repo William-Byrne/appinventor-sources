@@ -151,6 +151,7 @@
         <pathelement location="${lib.dir}/json/json.jar" />
         <pathelement location="${lib.dir}/mqtt/org.eclipse.paho.android.service-1.0.2.jar" />
         <pathelement location="${lib.dir}/mqtt/org.eclipse.paho.client.mqttv3-1.0.2.jar" />
+	    <pathelement location="${lib.dir}/mqtt/raspberrypi-mqtt-messages-1.0-SNAPSHOT.jar" />
       </classpath>
     </ai.javac5>
 
@@ -260,6 +261,7 @@
           <pathelement location="${lib.dir}/guava/guava-14.0.1.jar" />
           <pathelement location="${lib.dir}/mqtt/org.eclipse.paho.android.service-1.0.2.jar" />
           <pathelement location="${lib.dir}/mqtt/org.eclipse.paho.client.mqttv3-1.0.2.jar" />
+          <pathelement location="${lib.dir}/mqtt/raspberrypi-mqtt-messages-1.0-SNAPSHOT.jar" />
         </classpath>
         <compilerarg line="-processorpath ${local.build.dir}/AnnotationProcessors.jar"/>
         <compilerarg line="-processor @{apt-processor}" />

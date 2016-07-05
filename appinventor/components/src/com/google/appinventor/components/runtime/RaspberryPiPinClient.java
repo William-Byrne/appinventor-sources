@@ -3,6 +3,9 @@ package com.google.appinventor.components.runtime;
 import android.app.Activity;
 import android.os.Handler;
 import android.util.Log;
+import edu.mit.mqtt.raspberrypi.Messages;
+import edu.mit.mqtt.raspberrypi.Messages.PinValue;
+import edu.mit.mqtt.raspberrypi.Topics;
 
 import com.google.appinventor.components.annotations.DesignerProperty;
 
@@ -37,13 +40,13 @@ import com.google.appinventor.components.runtime.errors.ConnectionError;
 @SimpleObject
 @UsesPermissions(permissionNames = "android.permission.INTERNET, " + "android.permission.WAKE_LOCK, "
     + "android.permission.ACCESS_NETWORK_STATE, " + "android.permission.WRITE_EXTERNAL_STORAGE")
-@UsesLibraries(libraries = "org.eclipse.paho.android.service-1.0.2.jar, org.eclipse.paho.client.mqttv3-1.0.2.jar")
+@UsesLibraries(libraries = "org.eclipse.paho.android.service-1.0.2.jar, org.eclipse.paho.client.mqttv3-1.0.2.jar, raspberrypi-mqtt-messages-1.0-SNAPSHOT.jar")
 public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements Component, RaspberryPiMessageListener {
 
   private static final boolean DEBUG = true;
   private final static String LOG_TAG = "RaspberryPiPinClient";
 
-  private int pinNumber;
+  private int pinNumber = -1;
   private boolean pinState;
   private int direction;
   private int pinMode;
@@ -61,17 +64,17 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   /**
    * Creates a new AndroidNonvisibleComponent.
    *
-   * @param container
+   * @param pContainer
    *          container, component will be placed in
    */
-  public RaspberryPiPinClient(ComponentContainer container) {
-    super(container.$form());
+  public RaspberryPiPinClient(ComponentContainer pContainer) {
+    super(pContainer.$form());
 
     if (DEBUG) {
       Log.d(LOG_TAG, "Inside the RaspberryPiPinclient Constructor.");
     }
 
-    Activity context = container.$context();
+    Activity context = pContainer.$context();
     Handler handler = new Handler(context.getMainLooper());
 
     mRaspberryPiMessagingService = new RaspberryPiMessagingService(context, handler);
@@ -116,6 +119,18 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   @SimpleProperty(description = "Designates whether the pin is on or off.", userVisible = true)
   public void PinState(boolean pPinState) {
     pinState = pPinState;
+    if (pinNumber == -1) {
+      throw new ConnectionError("Pin number not set!");
+    }
+    PinValue pinStateValue = pPinState ? Messages.PinValue.HIGH : Messages.PinValue.LOW;
+    String message = Messages.constructPinMessage(pinNumber, Messages.PinProperty.PIN_STATE, pinStateValue);
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Setting Pin " + pinNumber + " to " + pinStateValue + " with this MQTT message: " + message);
+    }
+    mRaspberryPiMessagingService.publish(Topics.INTERNAL_TOPIC, message);
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Set Pin " + pinNumber + " to " + pinStateValue + " with this MQTT message: " + message);
+    }
   }
 
   @SimpleProperty(description = "Designates whether the pin is on or off.", category = PropertyCategory.BEHAVIOR, userVisible = true)

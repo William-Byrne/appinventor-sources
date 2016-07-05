@@ -1,6 +1,10 @@
 package com.google.appinventor.components.runtime;
 
+import android.app.Activity;
+import android.os.Handler;
 import android.util.Log;
+import edu.mit.mqtt.raspberrypi.Messages;
+import edu.mit.mqtt.raspberrypi.Topics;
 
 import com.google.appinventor.components.annotations.DesignerProperty;
 
@@ -12,6 +16,7 @@ import com.google.appinventor.components.annotations.SimpleEvent;
 import com.google.appinventor.components.annotations.SimpleFunction;
 import com.google.appinventor.components.annotations.SimpleObject;
 import com.google.appinventor.components.annotations.SimpleProperty;
+import com.google.appinventor.components.annotations.UsesLibraries;
 import com.google.appinventor.components.annotations.UsesPermissions;
 import com.google.appinventor.components.common.ComponentCategory;
 import com.google.appinventor.components.common.PropertyTypeConstants;
@@ -33,6 +38,7 @@ import com.google.appinventor.components.common.YaVersion;
     + "external MQTT based sources.</p>", version = YaVersion.RASPBERRYPI_COMPONENT_VERSION, category = ComponentCategory.EXPERIMENTAL, nonVisible = true, iconName = "images/raspberryPi.png")
 @SimpleObject
 @UsesPermissions(permissionNames = "aadroid.permission.INTERNET")
+@UsesLibraries(libraries = "org.eclipse.paho.android.service-1.0.2.jar, org.eclipse.paho.client.mqttv3-1.0.2.jar, raspberrypi-mqtt-messages-1.0-SNAPSHOT.jar")
 public class RaspberryPiServer extends AndroidNonvisibleComponent implements Component, RaspberryPiMessageListener {
 
   private static final boolean DEBUG = true;
@@ -45,6 +51,8 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
   private int pins;
   private boolean shutdown = false;
 
+  private RaspberryPiMessagingService mRaspberryPiMessagingService;
+
   /**
    * Creates a new AndroidNonvisibleComponent.
    *
@@ -53,6 +61,17 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
    */
   public RaspberryPiServer(ComponentContainer pContainer) {
     super(pContainer.$form());
+
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Inside the RaspberryPiServer Constructor.");
+    }
+
+    Activity context = pContainer.$context();
+    Handler handler = new Handler(context.getMainLooper());
+
+    mRaspberryPiMessagingService = new RaspberryPiMessagingService(context, handler);
+    mRaspberryPiMessagingService.addListener(this);
+
   }
 
   /**
@@ -181,10 +200,12 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
   public void Shutdown() {
     if (DEBUG) {
       Log.d(LOG_TAG, "Shutting down the RaspberryPi Server...");
-      Log.d(LOG_TAG, "To be implemented.");
     }
     shutdown = true;
-    // TODO pass the message to the RaspberryPiAppInventorCompanion
+    mRaspberryPiMessagingService.publish(Topics.INTERNAL_TOPIC, Messages.constructInternalMessage(Messages.Action.SHUTDOWN));
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Completed shutting down the RaspberryPi Server.");
+    }
   }
 
   /**
@@ -297,13 +318,13 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
       EventDispatcher.dispatchEvent(this, "MqttMessageReceived", pTopic, pMessage);
     }
   }
-  
+
   @Override
   @SimpleEvent(description = "Event handler when a message is sent through MQTT.")
   public void MqttMessageSent(List<String> pTopics, String pMessage) {
     if (DEBUG) {
       StringBuilder topicBuilder = new StringBuilder();
-      for (String topic: pTopics) {
+      for (String topic : pTopics) {
 	topicBuilder.append(topic);
       }
       String topics = topicBuilder.toString();
