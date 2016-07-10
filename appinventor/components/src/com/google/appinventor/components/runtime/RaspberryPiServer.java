@@ -3,8 +3,8 @@ package com.google.appinventor.components.runtime;
 import android.app.Activity;
 import android.os.Handler;
 import android.util.Log;
-import edu.mit.mqtt.raspberrypi.Messages;
-import edu.mit.mqtt.raspberrypi.Topics;
+import edu.mit.mqtt.raspberrypi.model.messaging.Action;
+import edu.mit.mqtt.raspberrypi.model.messaging.Topic;
 
 import com.google.appinventor.components.annotations.DesignerProperty;
 
@@ -202,8 +202,8 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
       Log.d(LOG_TAG, "Shutting down the RaspberryPi Server...");
     }
     shutdown = true;
-    mRaspberryPiMessagingService.publish(Topics.INTERNAL_TOPIC,
-        Messages.constructInternalMessage(Messages.Action.SHUTDOWN));
+    //TODO
+    mRaspberryPiMessagingService.publish(Topic.INTERNAL.name(), Action.SHUTDOWN.name());
     if (DEBUG) {
       Log.d(LOG_TAG, "Completed shutting down the RaspberryPi Server.");
     }

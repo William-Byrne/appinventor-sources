@@ -3,9 +3,13 @@ package com.google.appinventor.components.runtime;
 import android.app.Activity;
 import android.os.Handler;
 import android.util.Log;
+import edu.mit.mqtt.raspberrypi.HeaderPin;
 import edu.mit.mqtt.raspberrypi.Messages;
-import edu.mit.mqtt.raspberrypi.Messages.PinValue;
-import edu.mit.mqtt.raspberrypi.Topics;
+import edu.mit.mqtt.raspberrypi.model.device.PinDirection;
+import edu.mit.mqtt.raspberrypi.model.device.PinProperty;
+import edu.mit.mqtt.raspberrypi.model.device.PinValue;
+import edu.mit.mqtt.raspberrypi.model.device.RaspberrryPiModel;
+import edu.mit.mqtt.raspberrypi.model.messaging.Topic;
 
 import com.google.appinventor.components.annotations.DesignerProperty;
 
@@ -40,7 +44,7 @@ import com.google.appinventor.components.runtime.errors.ConnectionError;
 @SimpleObject
 @UsesPermissions(permissionNames = "android.permission.INTERNET, " + "android.permission.WAKE_LOCK, "
     + "android.permission.ACCESS_NETWORK_STATE, " + "android.permission.WRITE_EXTERNAL_STORAGE")
-@UsesLibraries(libraries = "org.eclipse.paho.android.service-1.0.2.jar, org.eclipse.paho.client.mqttv3-1.0.2.jar, raspberrypi-mqtt-messages-1.0-SNAPSHOT.jar")
+@UsesLibraries(libraries = "org.eclipse.paho.android.service-1.0.2.jar, org.eclipse.paho.client.mqttv3-1.0.2.jar, gson-2.1.jar, raspberrypi-mqtt-messages-1.0-SNAPSHOT.jar")
 public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements Component, RaspberryPiMessageListener {
 
   private static final boolean DEBUG = true;
@@ -48,7 +52,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
   private int pinNumber = -1;
   private boolean pinState;
-  private int direction;
+  private String pinDirection;
   private int pinMode;
   private int pullResistance;
   private String deviceName;
@@ -121,14 +125,28 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
     if (pinNumber == -1) {
       throw new ConnectionError("Pin number not set!");
     }
-    PinValue pinStateValue = pPinState ? Messages.PinValue.HIGH : Messages.PinValue.LOW;
-    String message = Messages.constructPinMessage(pinNumber, Messages.PinProperty.PIN_STATE, pinStateValue);
-    if (DEBUG) {
-      Log.d(LOG_TAG, "Setting Pin " + pinNumber + " to " + pinStateValue + " with this MQTT message: " + message);
+
+    HeaderPin myPin = new HeaderPin();
+    myPin.number = pinNumber;
+    myPin.property = PinProperty.PIN_STATE;
+    myPin.value = pPinState ? PinValue.HIGH : PinValue.LOW;
+    myPin.direction = PinDirection.fromString(pinDirection);
+    myPin.raspberryPiModel = RaspberrryPiModel.fromString(raspberryPiServer.Model());
+    myPin.label = deviceName;
+
+    if (myPin.isInvalid()) {
+      throw new ConnectionError(
+          "All the required properties for the RaspberryPiPinClient not set. Please check pinNumber, pinDirection, and the raspberryPiServer. The raspberryPiServer should have a model set.");
     }
-    mRaspberryPiMessagingService.publish(Topics.INTERNAL_TOPIC, message);
+
+    String message = Messages.constructPinMessage(myPin);
+
     if (DEBUG) {
-      Log.d(LOG_TAG, "Set Pin " + pinNumber + " to " + pinStateValue + " with this MQTT message: " + message);
+      Log.d(LOG_TAG, "Setting Pin " + pinNumber + " to " + myPin.value + " with this MQTT message: " + message);
+    }
+    mRaspberryPiMessagingService.publish(Topic.INTERNAL.toString(), message);
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Set Pin " + pinNumber + " to " + myPin.value + " with this MQTT message: " + message);
     }
   }
 
@@ -137,16 +155,15 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
     return pinState;
   }
 
-  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_INTEGER, defaultValue = Component.RASPBERRYPI_PINCLIENT_DIRECTION_VALUE
-      + "")
+  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
   @SimpleProperty(description = "Designates whether this is an input pin or an output pin.", userVisible = true)
-  public void Direction(int pDirection) {
-    direction = pDirection;
+  public void Direction(String pDirection) {
+    pinDirection = pDirection;
   }
 
   @SimpleProperty(description = "Designates whether this is an input pin or an output pin.", category = PropertyCategory.BEHAVIOR, userVisible = true)
-  public int Direction() {
-    return direction;
+  public String Direction() {
+    return pinDirection;
   }
 
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_INTEGER, defaultValue = Component.RASPBERRYPI_PINCLIENT_MODE_VALUE

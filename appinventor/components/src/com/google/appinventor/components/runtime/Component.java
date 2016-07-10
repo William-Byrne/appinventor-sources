@@ -162,7 +162,6 @@ public interface Component {
   //RaspberryPi Client Component default values
   public static final int RASPBERRYPI_PINCLIENT_NUMBER_VALUE = 1;
   public static final boolean RASPBERRYPI_PINCLIENT_STATE_VALUE = false;
-  public static final int RASPBERRYPI_PINCLIENT_DIRECTION_VALUE = 0;
   public static final int RASPBERRYPI_PINCLIENT_MODE_VALUE = 0;
   public static final int RASPBERRYPI_PINCLIENT_PULLRESISTANCE_VALUE = 1;
 
