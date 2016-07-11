@@ -6248,14 +6248,6 @@ public interface OdeMessages extends Messages {
   
   /* Properties */
   
-  @DefaultMessage("Direction")
-  @Description("")
-  String DirectionProperties();
-
-  @DefaultMessage("RaspberryPiServer")
-  @Description("")
-  String RaspberryPiServerProperties();
-
   @DefaultMessage("ExternalMQTTBroker")
   @Description("")
   String ExternalMQTTBrokerProperties();
@@ -6318,6 +6310,14 @@ public interface OdeMessages extends Messages {
   @Description("")
   String PinStateChangedEvents();
   
+  @DefaultMessage("PinStateChangedToHigh")
+  @Description("")
+  String PinStateChangedToHighEvents();
+
+  @DefaultMessage("PinStateChangedToLow")
+  @Description("")
+  String PinStateChangedToLowEvents();
+
   /* Methods */
 
   @DefaultMessage("Publish")
@@ -6339,6 +6339,10 @@ public interface OdeMessages extends Messages {
   @DefaultMessage("Unsubscribe")
   @Description("")
   String UnsubscribeMethods();
+  
+  @DefaultMessage("RegisterPin")
+  @Description("")
+  String RegisterPinMethods();  
 
   // =========== RaspberryPiServer
   

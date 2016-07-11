@@ -52,7 +52,6 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
   private int pinNumber = -1;
   private boolean pinState;
-  private String pinDirection;
   private int pinMode;
   private int pullResistance;
   private String deviceName;
@@ -61,6 +60,17 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   private String lastWillTopic;
   private String lastWillMessage;
   private String externalMQTTBroker;
+
+  /**
+   * Designates if this pin receives inputs (i.e. sensors attached) or sends
+   * output (i.e. LED indicator lights)
+   */
+  private PinDirection mPinDirection = PinDirection.OUT;
+  /**
+   * Designates the default value of this pin. This member variable is directly
+   * related to boolean pinState.
+   */
+  private PinValue mPinState = PinValue.LOW;
 
   private RaspberryPiServer raspberryPiServer;
   private RaspberryPiMessagingService mRaspberryPiMessagingService;
@@ -85,26 +95,6 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
   }
 
-  @SimpleProperty(description = "The RaspberryPiServer component this pin client is connected to", userVisible = true)
-  public void RaspberryPiServer(RaspberryPiServer pRaspberryPiServer) {
-    raspberryPiServer = pRaspberryPiServer;
-    String ipv4Address = raspberryPiServer.Ipv4Address();
-    int port = raspberryPiServer.Port();
-    if (DEBUG) {
-      Log.d(LOG_TAG, "Connecting to the RaspberryPiSever " + ipv4Address + ":" + port);
-    }
-    mRaspberryPiMessagingService.connect(ipv4Address, port);
-    if (DEBUG) {
-      Log.d(LOG_TAG, "Connected to the RaspberryPiSever " + ipv4Address + ":" + port);
-    }
-
-  }
-
-  @SimpleProperty(description = "The RaspberryPiServer component this pin client is connected to", userVisible = true)
-  public RaspberryPiServer RaspberryPiServer() {
-    return raspberryPiServer;
-  }
-
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_INTEGER, defaultValue = Component.RASPBERRYPI_PINCLIENT_NUMBER_VALUE
       + "")
   @SimpleProperty(description = "The assigned number for the pin in the RaspberryPi GPIO Header.", userVisible = true)
@@ -125,20 +115,9 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
     if (pinNumber == -1) {
       throw new ConnectionError("Pin number not set!");
     }
+    mPinState = pPinState ? PinValue.HIGH : PinValue.LOW;
 
-    HeaderPin myPin = new HeaderPin();
-    myPin.number = pinNumber;
-    myPin.property = PinProperty.PIN_STATE;
-    myPin.value = pPinState ? PinValue.HIGH : PinValue.LOW;
-    myPin.direction = PinDirection.fromString(pinDirection);
-    myPin.raspberryPiModel = RaspberrryPiModel.fromString(raspberryPiServer.Model());
-    myPin.label = deviceName;
-
-    if (myPin.isInvalid()) {
-      throw new ConnectionError(
-          "All the required properties for the RaspberryPiPinClient not set. Please check pinNumber, pinDirection, and the raspberryPiServer. The raspberryPiServer should have a model set.");
-    }
-
+    HeaderPin myPin = constructHeaderPin(PinProperty.PIN_STATE);
     String message = Messages.constructPinMessage(myPin);
 
     if (DEBUG) {
@@ -153,17 +132,6 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   @SimpleProperty(description = "Designates whether the pin is on or off.", category = PropertyCategory.BEHAVIOR, userVisible = true)
   public boolean PinState() {
     return pinState;
-  }
-
-  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
-  @SimpleProperty(description = "Designates whether this is an input pin or an output pin.", userVisible = true)
-  public void Direction(String pDirection) {
-    pinDirection = pDirection;
-  }
-
-  @SimpleProperty(description = "Designates whether this is an input pin or an output pin.", category = PropertyCategory.BEHAVIOR, userVisible = true)
-  public String Direction() {
-    return pinDirection;
   }
 
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_INTEGER, defaultValue = Component.RASPBERRYPI_PINCLIENT_MODE_VALUE
@@ -276,43 +244,85 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
   @SimpleFunction(description = "Publish a message on the subject via the mqttBrokerEndpoint given. The Publish method, "
       + " takes three Parameters such as RaspberryPiServer, Topic and Message . ")
-  public void Publish(final String pTopic, final String pMessage) {
+  public void Publish(final String topic, final String message) {
     if (DEBUG) {
-      Log.d(LOG_TAG, "Sending message " + pMessage + " on topic " + pTopic);
+      Log.d(LOG_TAG, "Sending message " + message + " on topic " + topic);
     }
     if (raspberryPiServerConnected()) {
-      mRaspberryPiMessagingService.publish(pTopic, pMessage);
+      mRaspberryPiMessagingService.publish(topic, message);
     }
     if (DEBUG) {
-      Log.d(LOG_TAG, "Sent message " + pMessage + " on topic " + pTopic);
+      Log.d(LOG_TAG, "Sent message " + message + " on topic " + topic);
     }
   }
 
   @SimpleFunction(description = "Subscribes to a topic on the given subject at the given mqttBrokerEndpoint. The Subsribe, "
       + " method has two parameters such as  String pMqttBrokerEndpoint, String pTopic . ")
-  public synchronized void Subscribe(final String pTopic) {
+  public synchronized void Subscribe(final String topic) {
     if (DEBUG) {
-      Log.d(LOG_TAG, "Subscribing to messages on topic " + pTopic);
+      Log.d(LOG_TAG, "Subscribing to messages on topic " + topic);
     }
     if (raspberryPiServerConnected()) {
-      mRaspberryPiMessagingService.subscribe(pTopic);
+      mRaspberryPiMessagingService.subscribe(topic);
     }
     if (DEBUG) {
-      Log.d(LOG_TAG, "Subscribed to messages on topic " + pTopic);
+      Log.d(LOG_TAG, "Subscribed to messages on topic " + topic);
     }
   }
 
   @SimpleFunction(description = "Unsubscribes to a topic on the given subject. The UnSubsribe, "
       + " method takes the parameter String pTopic . ")
-  public void Unsubscribe(String pTopic) {
+  public void Unsubscribe(String topic) {
     if (DEBUG) {
-      Log.d(LOG_TAG, "Unsubscribing to messages on topic " + pTopic);
+      Log.d(LOG_TAG, "Unsubscribing to messages on topic " + topic);
     }
     if (raspberryPiServerConnected()) {
-      mRaspberryPiMessagingService.unsubscribe(pTopic);
+      mRaspberryPiMessagingService.unsubscribe(topic);
     }
     if (DEBUG) {
-      Log.d(LOG_TAG, "Unsubscribed to messages on topic " + pTopic);
+      Log.d(LOG_TAG, "Unsubscribed to messages on topic " + topic);
+    }
+  }
+
+  /**
+   * Connect to the MQTTBroker, and if the pinDirection is in, i.e. a sensor or
+   * some other input is connected to the Raspberry Pi, a message is sent
+   * announcing the pin that was registered.
+   * 
+   * @param raspberryPiServer
+   * @param isOutput
+   */
+  @SimpleFunction(description = "Registers this pin with the RaspberryPiServer and designates the directionality of the pin, i.e. whether it is input or output.")
+  public void RegisterPin(RaspberryPiServer raspberryPiServer, boolean isOutput) {
+    mPinDirection = isOutput ? PinDirection.OUT : PinDirection.IN;
+    this.raspberryPiServer = raspberryPiServer;
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Registered " + this + " to " + raspberryPiServer + " with direction " + mPinDirection);
+    }
+
+    String ipv4Address = this.raspberryPiServer.Ipv4Address();
+    int port = this.raspberryPiServer.Port();
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Connecting to the RaspberryPiSever " + ipv4Address + ":" + port);
+    }
+    mRaspberryPiMessagingService.connect(ipv4Address, port);
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Connected to the RaspberryPiSever " + ipv4Address + ":" + port);
+    }
+
+    if (mPinDirection.equals(PinDirection.IN)) {
+      HeaderPin myPin = constructHeaderPin(PinProperty.REGISTER);
+      String message = Messages.constructPinMessage(myPin);
+
+      if (DEBUG) {
+	Log.d(LOG_TAG,
+	    "Registering Pin " + pinNumber + " with this RaspberryPiServer with this MQTT message: " + message);
+      }
+      mRaspberryPiMessagingService.publish(Topic.INTERNAL.toString(), message);
+      if (DEBUG) {
+	Log.d(LOG_TAG,
+	    "Registering Pin " + pinNumber + " with this RaspberryPiServer with this MQTT message: " + message);
+      }
     }
   }
 
@@ -321,8 +331,25 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
     if (DEBUG) {
       Log.d(LOG_TAG, "RaspberryPi pin " + pinNumber + " state changed to " + pinState + ".");
     }
-    // TODO: what triggers a pin state change?
     EventDispatcher.dispatchEvent(this, "PinStateChanged");
+  }
+
+  @SimpleEvent(description = "Event handler to return if the state of the pin changed to HIGH.")
+  public void PinStateChangedToHigh() {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "RaspberryPi pin " + pinNumber + " state changed to " + pinState + ".");
+    }
+    pinState = true;
+    EventDispatcher.dispatchEvent(this, "PinStateChangedToHigh");
+  }
+
+  @SimpleEvent(description = "Event handler to return if the state of the pin changed to LOW.")
+  public void PinStateChangedToLow() {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "RaspberryPi pin " + pinNumber + " state changed to " + pinState + ".");
+    }
+    pinState = false;
+    EventDispatcher.dispatchEvent(this, "PinStateChangedToLow");
   }
 
   @SimpleEvent(description = "Event handler when the pin is connected to a device.")
@@ -336,39 +363,64 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
   @Override
   @SimpleEvent(description = "Event handler when a message is received through MQTT.")
-  public void MqttMessageReceived(String pTopic, String pMessage) {
+  public void MqttMessageReceived(String topic, String message) {
     if (DEBUG) {
-      Log.d(LOG_TAG, "Mqtt Message " + pMessage + " received on subject " + pTopic + ".");
+      Log.d(LOG_TAG, "Mqtt Message " + message + " received on subject " + topic + ".");
     }
-    if (pTopic != null && pMessage != null && pMessage.length() > 0) {
-      EventDispatcher.dispatchEvent(this, "MqttMessageReceived", pTopic, pMessage);
+    if (mPinDirection.equals(PinDirection.IN) && topic.equals(Topic.INTERNAL.toString())) {
+      HeaderPin pin = Messages.deconstrctPinMessage(message);
+      if (DEBUG) {
+	Log.d(LOG_TAG, "Received internal message for pin =" + pin);
+      }
+      if (pin.number == pinNumber) {
+	if (pin.property.equals(PinProperty.PIN_STATE)) {
+	  if (pin.value.equals(PinValue.HIGH)) {
+	    PinStateChangedToHigh();
+	    if (!pinState) {
+	      PinStateChanged();
+	    }
+	  } else if (pin.value.equals(PinValue.LOW)) {
+	    PinStateChangedToLow();
+	    if (pinState) {
+	      PinStateChanged();
+	    }
+	  }
+	}
+      }
+    }
+    /**
+     * Finally, we need to dispatch this message regardless of the topic of the
+     * message.
+     */
+    if (topic != null && message != null && message.length() > 0) {
+      EventDispatcher.dispatchEvent(this, "MqttMessageReceived", topic, message);
     }
   }
 
   @Override
   @SimpleEvent(description = "Event handler when a message is sent through MQTT.")
-  public void MqttMessageSent(List<String> pTopics, String pMessage) {
+  public void MqttMessageSent(List<String> topics, String message) {
     if (DEBUG) {
       StringBuilder topicBuilder = new StringBuilder();
-      for (String topic : pTopics) {
+      for (String topic : topics) {
 	topicBuilder.append(topic);
       }
-      String topics = topicBuilder.toString();
-      Log.d(LOG_TAG, "Mqtt Message " + pMessage + " sent on subjects " + topics + ".");
+      String allTopics = topicBuilder.toString();
+      Log.d(LOG_TAG, "Mqtt Message " + message + " sent on subjects " + allTopics + ".");
     }
-    if (pTopics != null && pTopics.size() > 0 && pMessage != null && pMessage.length() > 0) {
-      EventDispatcher.dispatchEvent(this, "MqttMessageSent", pTopics, pMessage);
+    if (topics != null && topics.size() > 0 && message != null && message.length() > 0) {
+      EventDispatcher.dispatchEvent(this, "MqttMessageSent", topics, message);
     }
   }
 
   @Override
   @SimpleEvent(description = "Event handler when a message the MQTT connection is lost.")
-  public void MqttConnectionLost(String pError) {
+  public void MqttConnectionLost(String error) {
     if (DEBUG) {
-      Log.d(LOG_TAG, "Connection via MQTT lost due to this error: " + pError);
+      Log.d(LOG_TAG, "Connection via MQTT lost due to this error: " + error);
     }
-    if (pError != null) {
-      EventDispatcher.dispatchEvent(this, "MqttConnectionLost", pError);
+    if (error != null) {
+      EventDispatcher.dispatchEvent(this, "MqttConnectionLost", error);
     }
   }
 
@@ -378,9 +430,35 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
     }
     if (raspberryPiServer == null) {
       throw new ConnectionError(
-          "The RaspberryPiServer must be connected to the RaspberryPiPinClient to perform the action.");
+          "The RaspberryPiPinClient must be registered with a RaspberryPiServer to perform the action.");
     }
     return true;
+  }
+
+  private HeaderPin constructHeaderPin(PinProperty pProperty) {
+    HeaderPin myPin = new HeaderPin();
+    myPin.number = pinNumber;
+    myPin.property = pProperty;
+    myPin.value = mPinState;
+    myPin.direction = mPinDirection;
+    myPin.raspberryPiModel = RaspberrryPiModel.fromString(raspberryPiServer.Model());
+    myPin.label = deviceName;
+
+    if (myPin.isInvalid()) {
+      throw new ConnectionError(
+          "All the required properties for the RaspberryPiPinClient not set. Please check pinNumber, pinDirection, and the raspberryPiServer. The raspberryPiServer should have a model set.");
+    }
+    return myPin;
+  }
+
+  @Override
+  public String toString() {
+    return "RaspberryPiPinClient: [deviceName:" + deviceName + ", externalMQTTBroker:" + externalMQTTBroker
+        + ", lastWillMessage:" + lastWillMessage + ", lastWillTopic:" + lastWillTopic + ", pinDirection:"
+        + mPinDirection + ", mqttMessage:" + mqttMessage + ", mqttTopic:" + mqttTopic
+        + ", mRaspberryPiMessagingService:" + mRaspberryPiMessagingService + ", pinMode:" + pinMode + ", pinNumber:"
+        + pinNumber + ", pinState:" + pinState + ", pullResistance:" + pullResistance + ", raspberryPiServer:"
+        + raspberryPiServer + "]";
   }
 
 }

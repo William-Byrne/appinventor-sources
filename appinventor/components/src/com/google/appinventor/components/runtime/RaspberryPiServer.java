@@ -185,12 +185,12 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
   /**
    * Checks if the given pin can work on the RaspberryPi model being used.
    * 
-   * @param pPinNumber
+   * @param pinNumber
    * @return true if this pin is available on the specified RaspberryPi model.
    */
   @SimpleFunction(description = "Returns true if this pin is available on the specified RaspberryPi model.")
-  public boolean HasPin(int pPinNumber) {
-    return pPinNumber <= pins && pPinNumber > 0;
+  public boolean HasPin(int pinNumber) {
+    return pinNumber <= pins && pinNumber > 0;
   }
 
   /**
@@ -202,7 +202,7 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
       Log.d(LOG_TAG, "Shutting down the RaspberryPi Server...");
     }
     shutdown = true;
-    //TODO
+    // TODO
     mRaspberryPiMessagingService.publish(Topic.INTERNAL.name(), Action.SHUTDOWN.name());
     if (DEBUG) {
       Log.d(LOG_TAG, "Completed shutting down the RaspberryPi Server.");
@@ -253,11 +253,11 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
   /**
    * Returns true if the client with the given pin number is connected.
    * 
-   * @param pPin
+   * @param pin
    * @return true if the client with the given pin number is connected.
    */
   @SimpleFunction(description = "Returns true if the client with the given pin number is connected.")
-  public boolean IsClientConnected(int pPin) {
+  public boolean IsClientConnected(int pin) {
     if (DEBUG) {
       Log.d(LOG_TAG, "Checking if the client is connected...");
       Log.d(LOG_TAG, "To be implemented.");
@@ -288,7 +288,7 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
    * @return true when the given client has connected.
    */
   @SimpleEvent(description = "Event handler when a certain client has connected.")
-  public boolean ClientConnected(int pPin) {
+  public boolean ClientConnected(int pin) {
     if (DEBUG) {
       Log.d(LOG_TAG, "Handle an event if a client has connected.");
       Log.d(LOG_TAG, "To be implemented.");
@@ -299,7 +299,7 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
   }
 
   @SimpleEvent(description = "Event handler when a certain client attached to a pin has disconnected")
-  public boolean ClientDisconnected(int pPin) {
+  public boolean ClientDisconnected(int pin) {
     if (DEBUG) {
       Log.d(LOG_TAG, "Handle an event if a client has diconnected.");
       Log.d(LOG_TAG, "To be implemented. ");
@@ -311,39 +311,39 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
 
   @Override
   @SimpleEvent(description = "Event handler when a message is received through MQTT.")
-  public void MqttMessageReceived(String pTopic, String pMessage) {
+  public void MqttMessageReceived(String topic, String message) {
     if (DEBUG) {
-      Log.d(LOG_TAG, "Mqtt Message " + pMessage + " received on subject " + pTopic + ".");
+      Log.d(LOG_TAG, "Mqtt Message " + message + " received on subject " + topic + ".");
     }
-    if (pTopic != null && pMessage != null && pMessage.length() > 0) {
-      EventDispatcher.dispatchEvent(this, "MqttMessageReceived", pTopic, pMessage);
+    if (topic != null && message != null && message.length() > 0) {
+      EventDispatcher.dispatchEvent(this, "MqttMessageReceived", topic, message);
     }
   }
 
   @Override
   @SimpleEvent(description = "Event handler when a message is sent through MQTT.")
-  public void MqttMessageSent(List<String> pTopics, String pMessage) {
+  public void MqttMessageSent(List<String> topics, String message) {
     if (DEBUG) {
       StringBuilder topicBuilder = new StringBuilder();
-      for (String topic : pTopics) {
+      for (String topic : topics) {
 	topicBuilder.append(topic);
       }
-      String topics = topicBuilder.toString();
-      Log.d(LOG_TAG, "Mqtt Message " + pMessage + " sent on subjects " + topics + ".");
+      String allTopics = topicBuilder.toString();
+      Log.d(LOG_TAG, "Mqtt Message " + message + " sent on subjects " + allTopics + ".");
     }
-    if (pTopics != null && pTopics.size() > 0 && pMessage != null && pMessage.length() > 0) {
-      EventDispatcher.dispatchEvent(this, "MqttMessageSent", pTopics, pMessage);
+    if (topics != null && topics.size() > 0 && message != null && message.length() > 0) {
+      EventDispatcher.dispatchEvent(this, "MqttMessageSent", topics, message);
     }
   }
 
   @Override
   @SimpleEvent(description = "Event handler when a message the MQTT connection is lost.")
-  public void MqttConnectionLost(String pError) {
+  public void MqttConnectionLost(String error) {
     if (DEBUG) {
-      Log.d(LOG_TAG, "Connection via MQTT lost due to this error: " + pError);
+      Log.d(LOG_TAG, "Connection via MQTT lost due to this error: " + error);
     }
-    if (pError != null) {
-      EventDispatcher.dispatchEvent(this, "MqttConnectionLost", pError);
+    if (error != null) {
+      EventDispatcher.dispatchEvent(this, "MqttConnectionLost", error);
     }
   }
 

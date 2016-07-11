@@ -505,6 +505,55 @@ Blockly.Drawer.defaultBlockXMLStrings = {
          Blockly.Drawer.mutatorAttributesToXMLString(mutatorAttributes) +
          '<value name="ARG1"><block type="text"><field name="TEXT">MM/dd/yyyy hh:mm:ss a</field></block></value>' +
          '</block>' +
-         '</xml>';}}
+         '</xml>';}},
+   
+   	//Setting default strings to the topic and the message
+    {matchingMutatorAttributes:{component_type:"RaspberryPiPinClient", method_name:"Publish"},
+      mutatorXMLStringFunction: function(mutatorAttributes) {
+        return '' +
+            '<xml>' +
+            '<block type="component_method">' +
+              //mutator generator
+            Blockly.Drawer.mutatorAttributesToXMLString(mutatorAttributes) +
+            '<value name="ARG0"><block type="text"><title name="TEXT"></title></block></value>' +
+            '<value name="ARG1"><block type="text"><title name="TEXT"></title></block></value>' +
+            '</block>' +
+            '</xml>';}},
+   
+    //Setting default strings to the topic for subscribing
+    {matchingMutatorAttributes:{component_type:"RaspberryPiPinClient", method_name:"Subscribe"},
+      mutatorXMLStringFunction: function(mutatorAttributes) {
+        return '' +
+            '<xml>' +
+            '<block type="component_method">' +
+              //mutator generator
+            Blockly.Drawer.mutatorAttributesToXMLString(mutatorAttributes) +
+            '<value name="ARG0"><block type="text"><title name="TEXT"></title></block></value>' +
+            '</block>' +
+            '</xml>';}},
+   
+    //Setting default strings to the topic for unsubscribing
+    {matchingMutatorAttributes:{component_type:"RaspberryPiPinClient", method_name:"Unsubscribe"},
+      mutatorXMLStringFunction: function(mutatorAttributes) {
+        return '' +
+            '<xml>' +
+            '<block type="component_method">' +
+              //mutator generator
+            Blockly.Drawer.mutatorAttributesToXMLString(mutatorAttributes) +
+            '<value name="ARG0"><block type="text"><title name="TEXT"></title></block></value>' +
+            '</block>' +
+            '</xml>';}},
+            
+    //Setting default strings to the pin direction
+    {matchingMutatorAttributes:{component_type:"RaspberryPiPinClient", method_name:"RegisterPin"},
+      mutatorXMLStringFunction: function(mutatorAttributes) {
+        return '' +
+            '<xml>' +
+            '<block type="component_method">' +
+              //mutator generator
+            Blockly.Drawer.mutatorAttributesToXMLString(mutatorAttributes) +
+            '<value name="ARG1"><block type="logic_boolean"><title name="BOOL">TRUE</title></block></value>' +
+         	'</block>' +
+            '</xml>';}}
   ]
 };
