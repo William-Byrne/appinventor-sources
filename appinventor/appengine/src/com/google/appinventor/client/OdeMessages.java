@@ -6340,9 +6340,9 @@ public interface OdeMessages extends Messages {
   @Description("")
   String UnsubscribeMethods();
   
-  @DefaultMessage("RegisterPin")
+  @DefaultMessage("Register")
   @Description("")
-  String RegisterPinMethods();  
+  String RegisterMethods();  
 
   // =========== RaspberryPiServer
   
@@ -6379,6 +6379,10 @@ public interface OdeMessages extends Messages {
   String HasShutdownEvents();
   
   /* Methods */
+
+  @DefaultMessage("Initialize")
+  @Description("")
+  String InitializeMethods();
 
   @DefaultMessage("ConnectedClients")
   @Description("")

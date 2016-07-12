@@ -59,8 +59,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   private String mqttMessage;
   private String lastWillTopic;
   private String lastWillMessage;
-  private String externalMQTTBroker;
-
+ 
   /**
    * Designates if this pin receives inputs (i.e. sensors attached) or sends
    * output (i.e. LED indicator lights)
@@ -161,7 +160,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
   @SimpleProperty(description = "Designates the type of device connected to the pin. For e.g. LED, TemperatureSensor", userVisible = true)
   public void DeviceName(String pDeviceName) {
-    deviceName = pDeviceName;
+    this.deviceName = pDeviceName;
   }
 
   @SimpleProperty(description = "Designates the type of device connected to the pin. For e.g. LED, TemperatureSensor", category = PropertyCategory.BEHAVIOR, userVisible = true)
@@ -171,7 +170,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
   @SimpleProperty(description = "The topic of interest for this pin. For e.g. if the pin is attached to a temperature sensor, the topic can be 'temperature'.", userVisible = true)
   public void MqttTopic(String pMqttTopic) {
-    mqttTopic = pMqttTopic;
+    this.mqttTopic = pMqttTopic;
   }
 
   @SimpleProperty(description = "The topic of interest for this pin. For e.g. if the pin is attached to a temperature sensor, the topic can be 'temperature'.", category = PropertyCategory.BEHAVIOR, userVisible = true)
@@ -182,7 +181,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   @SimpleProperty(description = "The message either sent to or received from the endpoint device attached to the pin. "
       + "For e.g. a TemperatureSensor can publish '80' as the payload.", userVisible = true)
   public void MqttMessage(String pMqttMessage) {
-    mqttMessage = pMqttMessage;
+    this.mqttMessage = pMqttMessage;
   }
 
   @SimpleProperty(description = "The message either sent to or received from the endpoint device attached to the pin. For e.g. a TemperatureSensor can publish '80' as the payload.", category = PropertyCategory.BEHAVIOR, userVisible = true)
@@ -193,7 +192,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
   @SimpleProperty(description = "The topic to publish the lastWillMessage.", userVisible = true)
   public void LastWillTopic(String pLastWillTopic) {
-    lastWillTopic = pLastWillTopic;
+    this.lastWillTopic = pLastWillTopic;
   }
 
   @SimpleProperty(description = "The topic to publish the lastWillMessage.", category = PropertyCategory.BEHAVIOR, userVisible = true)
@@ -204,38 +203,13 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
   @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
   @SimpleProperty(description = "Message to be sent in the event the client disconnects.", userVisible = true)
   public void LastWillMessage(String pLastWillMessage) {
-    lastWillMessage = pLastWillMessage;
+    this.lastWillMessage = pLastWillMessage;
   }
 
   @SimpleProperty(description = "Message to be sent in the event the client disconnects.", category = PropertyCategory.BEHAVIOR, userVisible = true)
   public String LastWillMessage() {
     return lastWillMessage;
   }
-
-  // TODO: Refactor this: Have a top level MQTTBroker and have the
-  // RaspberryPiServer subclass from that?
-
-  // @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING)
-  // @SimpleProperty(description = "In addition to the RaspberryPi Server acting
-  // as the MQTTBroker, "
-  // + "a device attached a pin may optionally connect to an external MQTT
-  // broker identified by "
-  // + "the ip address and port of the external MQTT broker.", userVisible =
-  // true)
-  // public void ExternalMQTTBroker(String pExternalMQTTBroker) {
-  // externalMQTTBroker = pExternalMQTTBroker;
-  // }
-  //
-  // @SimpleProperty(description = "In addition to the RaspberryPi Server acting
-  // as the MQTTBroker, "
-  // + "a device attached a pin may optionally connect to an external MQTT
-  // broker identified by "
-  // + "the ip address and port of the external MQTT broker.", category =
-  // PropertyCategory.BEHAVIOR, userVisible = true)
-  // public String ExternalMQTTBroker() {
-  // return externalMQTTBroker;
-  // }
-  //
 
   @SimpleFunction(description = "Changes the state of the pin from HIGH to LOW or vice versa.")
   public void Toggle() {
@@ -293,8 +267,9 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
    * @param isOutput
    */
   @SimpleFunction(description = "Registers this pin with the RaspberryPiServer and designates the directionality of the pin, i.e. whether it is input or output.")
-  public void RegisterPin(RaspberryPiServer raspberryPiServer, boolean isOutput) {
-    mPinDirection = isOutput ? PinDirection.OUT : PinDirection.IN;
+  public void Register(int pin, boolean isOutput, RaspberryPiServer raspberryPiServer) {
+    this.pinNumber = pin;
+    this.mPinDirection = isOutput ? PinDirection.OUT : PinDirection.IN;
     this.raspberryPiServer = raspberryPiServer;
     if (DEBUG) {
       Log.d(LOG_TAG, "Registered " + this + " to " + raspberryPiServer + " with direction " + mPinDirection);
@@ -453,7 +428,7 @@ public class RaspberryPiPinClient extends AndroidNonvisibleComponent implements 
 
   @Override
   public String toString() {
-    return "RaspberryPiPinClient: [deviceName:" + deviceName + ", externalMQTTBroker:" + externalMQTTBroker
+    return "RaspberryPiPinClient: [deviceName:" + deviceName
         + ", lastWillMessage:" + lastWillMessage + ", lastWillTopic:" + lastWillTopic + ", pinDirection:"
         + mPinDirection + ", mqttMessage:" + mqttMessage + ", mqttTopic:" + mqttTopic
         + ", mRaspberryPiMessagingService:" + mRaspberryPiMessagingService + ", pinMode:" + pinMode + ", pinNumber:"

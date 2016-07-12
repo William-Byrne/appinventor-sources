@@ -545,15 +545,31 @@ Blockly.Drawer.defaultBlockXMLStrings = {
             '</xml>';}},
             
     //Setting default strings to the pin direction
-    {matchingMutatorAttributes:{component_type:"RaspberryPiPinClient", method_name:"RegisterPin"},
+    {matchingMutatorAttributes:{component_type:"RaspberryPiPinClient", method_name:"Register"},
       mutatorXMLStringFunction: function(mutatorAttributes) {
         return '' +
             '<xml>' +
             '<block type="component_method">' +
               //mutator generator
             Blockly.Drawer.mutatorAttributesToXMLString(mutatorAttributes) +
+            '<value name="ARG0"><block type="math_number"><title name="NUM"></title></block></value>' +
             '<value name="ARG1"><block type="logic_boolean"><title name="BOOL">TRUE</title></block></value>' +
          	'</block>' +
+            '</xml>';}},
+            
+    //Setting default values to the RaspberryPiServer.Initialize 
+    {matchingMutatorAttributes:{component_type:"RaspberryPiServer", method_name:"Initialize"},
+      mutatorXMLStringFunction: function(mutatorAttributes) {
+        return '' +
+            '<xml>' +
+            '<block type="component_method">' +
+              //mutator generator
+            Blockly.Drawer.mutatorAttributesToXMLString(mutatorAttributes) +
+            '<value name="ARG0"><block type="text"><title name="TEXT">Pi2B</title></block></value>' +
+            '<value name="ARG1"><block type="text"><title name="TEXT">iot.eclipse.org</title></block></value>' +
+            '<value name="ARG2"><block type="math_number"><title name="NUM">1883</title></block></value>' +
+         	'</block>' +
             '</xml>';}}
+            
   ]
 };

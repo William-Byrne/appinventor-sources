@@ -183,6 +183,22 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
   }
 
   /**
+   * Initializes the RaspberryPiServer to send and receive MQTT messages.
+   * @param model
+   * @param brokerIpAddress
+   * @param brokerPort
+   */
+  @SimpleFunction(description = "Returns true if the client with the given pin number is connected.")
+  public void Initialize(String model, String brokerIpAddress, int brokerPort) {
+    if (DEBUG) {
+      Log.d(LOG_TAG, "Initializing the RaspberryPiServer properties...");
+    }
+    this.model = model;
+    this.ipv4Address = brokerIpAddress;
+    this.port = brokerPort;
+  }
+ 
+  /**
    * Checks if the given pin can work on the RaspberryPi model being used.
    * 
    * @param pinNumber
@@ -265,7 +281,7 @@ public class RaspberryPiServer extends AndroidNonvisibleComponent implements Com
     // TODO pass the message to the RaspberryPiAppInventorCompanion
     return false;
   }
-
+ 
   /**
    * Event handler when RaspberryPiServer has shutdown.
    * 
